@@ -38,17 +38,21 @@ class TestDownloaderUtils(object):
 
 
 class TestHashUtils(object):
+    HASH_FILE = './test/data/HASH'
+
     def hash_file_calc(self, hsh, digest):
-        path = "./test/data/HASH"
-        assert digest == hsh.calculate_hash(path)
+        assert digest == hsh.calculate_hash(self.HASH_FILE)
 
     def hash_file_matches(self, hsh, digest):
-        path = "./test/data/HASH"
-        assert hsh.does_hash_match(digest, path)
+        assert hsh.does_hash_match(digest, self.HASH_FILE)
 
     def hash_file_not_matches(self, hsh, digest):
-        path = "./test/data/HASH"
-        assert not hsh.does_hash_match(digest, path)
+        assert not hsh.does_hash_match(digest, self.HASH_FILE)
+
+    def hash_file_bad_algorithm(self, hsh, algorithm, msg):
+        with assert_raises(ValueError) as cm:
+            hsh.calculate_hash(self.HASH_FILE)
+        eq_(msg, cm.exception.message)
 
     # Test hashlib
     def test_hash_util_sha1(self):
@@ -83,6 +87,18 @@ class TestHashUtils(object):
         assert '' == hsh.calculate_hash(None)
         assert '' == hsh.calculate_hash('')
 
+    def test_hash_util_empty_algorithms(self):
+        hsh = build_pack_utils.HashUtil({'cache-hash-algorithm': ''})
+        self.hash_file_bad_algorithm(hsh, '', 'unsupported hash type ')
+
+    def test_hash_util_bad_algorithm(self):
+        hsh = build_pack_utils.HashUtil({'cache-hash-algorithm': '???'})
+        self.hash_file_bad_algorithm(hsh, '???', 'unsupported hash type ???')
+
+    def test_hash_util_missing_algorithm(self):
+        hsh = build_pack_utils.HashUtil({'cache-hash-algorithm': '2'})
+        self.hash_file_bad_algorithm(hsh, '2', 'unsupported hash type 2')
+
     # Test External SHA
     def test_sha_hash_util_sha1(self):
         self.hash_file_calc(
@@ -115,4 +131,18 @@ class TestHashUtils(object):
         hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '512'})
         assert '' == hsh.calculate_hash(None)
         assert '' == hsh.calculate_hash('')
+
+    def test_sha_hash_util_empty_algorithms(self):
+        hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': ''})
+        self.hash_file_bad_algorithm(hsh, '',
+                'Value "" invalid for option a (number expected)')
+
+    def test_sha_hash_util_bad_algorithm(self):
+        hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '???'})
+        self.hash_file_bad_algorithm(hsh, '???',
+                'Value "???" invalid for option a (number expected)')
+
+    def test_sha_hash_util_missing_algorithm(self):
+        hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '2'})
+        self.hash_file_bad_algorithm(hsh, '2', 'shasum: Unrecognized algorithm')
 
