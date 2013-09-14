@@ -110,10 +110,12 @@ class ShaHashUtil(HashUtil):
             return ''
         proc = Popen(["shasum", "-b",
                       "-a", self._cfg['cache-hash-algorithm'],
-                      checkFile], stdout=PIPE)
-        output, unused_err = proc.communicate()
+                      checkFile], stdout=PIPE, stderr=PIPE)
+        output, err = proc.communicate()
         retcode = proc.poll()
         if retcode == 0:
             return output.strip().split(' ')[0]
+        elif retcode == 1:
+            raise ValueError(err.split('\n')[0])
 
 
