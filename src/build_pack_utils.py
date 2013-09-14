@@ -88,9 +88,11 @@ class HashUtil(object):
         self._cfg = config
 
     def calculate_hash(self, checkFile):
+        if checkFile is None or checkFile == '':
+            return ''
         hsh = hashlib.new(self._cfg['cache-hash-algorithm'])
         with open(checkFile, 'rb') as fileIn:
-            for buf in iter(partial(f.read, 8196), ''):
+            for buf in iter(partial(fileIn.read, 8196), ''):
                 hsh.update(buf)
         return hsh.hexdigest()
 
@@ -104,8 +106,11 @@ class ShaHashUtil(HashUtil):
         HashUtil.__init__(self, config)
 
     def calculate_hash(self, checkFile):
+        if checkFile is None or checkFile == '':
+            return ''
         proc = Popen(["shasum", "-b",
-                      "-a", self._cfg['cache-hash-algorithm']], stdout=PIPE)
+                      "-a", self._cfg['cache-hash-algorithm'],
+                      checkFile], stdout=PIPE)
         output, unused_err = proc.communicate()
         retcode = proc.poll()
         if retcode == 0:
