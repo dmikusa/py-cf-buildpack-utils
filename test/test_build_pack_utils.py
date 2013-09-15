@@ -3,7 +3,11 @@ import urllib2
 import os.path
 import tempfile
 import shutil
-from nose.tools import *
+from nose.tools import raises
+from nose.tools import eq_
+from nose.tools import with_setup
+from nose.tools import assert_raises
+
 
 class TestDownloaderUtils(object):
     def _run_download(self, dwn, url):
@@ -11,10 +15,13 @@ class TestDownloaderUtils(object):
         dwn.download(url, path)
         assert os.path.exists(path)
         with open(path, 'rt') as keysFile:
-            assert 11 == keysFile.read().count('-----END PGP PUBLIC KEY BLOCK-----')
+            assert 11 == \
+                keysFile.read().count('-----END PGP PUBLIC KEY BLOCK-----')
 
     def run_download(self, dwn):
-        self._run_download(dwn, 'http://archive.apache.org/dist/tomcat/tomcat-8/KEYS')
+        self._run_download(
+            dwn,
+            'http://archive.apache.org/dist/tomcat/tomcat-8/KEYS')
 
     def run_download_404(self, dwn):
         self._run_download(dwn, 'http://www.mikusa.com/does_not_exist')
@@ -22,10 +29,10 @@ class TestDownloaderUtils(object):
     # Tests start here
     def test_downloader(self):
         self.run_download(build_pack_utils.Downloader({}))
-    
-    def test_downloader(self):
+
+    def test_downloader_verbose(self):
         self.run_download(build_pack_utils.Downloader({'verbose': True}))
-    
+
     @raises(urllib2.HTTPError)
     def test_downloader_404(self):
         self.run_download_404(build_pack_utils.Downloader({}))
@@ -69,13 +76,13 @@ class TestHashUtils(object):
     def test_hash_util_sha512(self):
         self.hash_file_calc(
             build_pack_utils.HashUtil({'cache-hash-algorithm': 'sha512'}),
-            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53" \
+            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53"
             "fbd0e8fa973f782b27b2059b72f46c5080411f018651808a6f716eec08bc1f1")
 
     def test_hash_util_matches(self):
         self.hash_file_matches(
             build_pack_utils.HashUtil({'cache-hash-algorithm': 'sha512'}),
-            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53" \
+            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53"
             "fbd0e8fa973f782b27b2059b72f46c5080411f018651808a6f716eec08bc1f1")
 
     def test_hash_util_not_matches(self):
@@ -114,13 +121,13 @@ class TestHashUtils(object):
     def test_sha_hash_util_sha512(self):
         self.hash_file_calc(
             build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '512'}),
-            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53" \
+            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53"
             "fbd0e8fa973f782b27b2059b72f46c5080411f018651808a6f716eec08bc1f1")
 
     def test_sha_hash_util_matches(self):
         self.hash_file_matches(
             build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '512'}),
-            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53" \
+            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53"
             "fbd0e8fa973f782b27b2059b72f46c5080411f018651808a6f716eec08bc1f1")
 
     def test_sha_hash_util_not_matches(self):
@@ -135,23 +142,25 @@ class TestHashUtils(object):
 
     def test_sha_hash_util_empty_algorithms(self):
         hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': ''})
-        self.hash_file_bad_algorithm(hsh, '',
-                'Value "" invalid for option a (number expected)')
+        self.hash_file_bad_algorithm(
+            hsh, '', 'Value "" invalid for option a (number expected)')
 
     def test_sha_hash_util_bad_algorithm(self):
         hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '???'})
-        self.hash_file_bad_algorithm(hsh, '???',
-                'Value "???" invalid for option a (number expected)')
+        self.hash_file_bad_algorithm(
+            hsh, '???', 'Value "???" invalid for option a (number expected)')
 
     def test_sha_hash_util_missing_algorithm(self):
         hsh = build_pack_utils.ShaHashUtil({'cache-hash-algorithm': '2'})
-        self.hash_file_bad_algorithm(hsh, '2', 'shasum: Unrecognized algorithm')
+        self.hash_file_bad_algorithm(
+            hsh, '2', 'shasum: Unrecognized algorithm')
 
 
 class TestDirectoryCacheManager(object):
 
     def __init__(self):
-        self._hshUtil = build_pack_utils.HashUtil({'cache-hash-algorithm': 'sha256'})
+        self._hshUtil = build_pack_utils.HashUtil(
+            {'cache-hash-algorithm': 'sha256'})
 
     def tearDown(self):
         path = os.path.join(tempfile.gettempdir(), 'junk.txt')
@@ -171,9 +180,9 @@ class TestDirectoryCacheManager(object):
     def test_basics(self):
         path = os.path.join(tempfile.gettempdir(), "DCM")
         dcm = build_pack_utils.DirectoryCacheManager({
-                'file-cache-base-directory': path,
-                'use-external-hash': False,
-                'cache-hash-algorithm': 'sha256' })
+            'file-cache-base-directory': path,
+            'use-external-hash': False,
+            'cache-hash-algorithm': 'sha256'})
         assert not dcm.exists('asdf', None)
         junk_file = self.create_junk_file('junk.txt')
         key = os.path.basename(junk_file[0])
@@ -182,4 +191,3 @@ class TestDirectoryCacheManager(object):
         assert dcm.get(key, junk_file[1]).endswith('DCM/junk.txt')
         dcm.delete(key)
         assert not dcm.exists(key, junk_file[1])
-

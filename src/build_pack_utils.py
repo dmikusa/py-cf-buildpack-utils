@@ -7,6 +7,7 @@ from functools import partial
 from subprocess import Popen
 from subprocess import PIPE
 
+
 class Downloader(object):
 
     def __init__(self, config):
@@ -26,14 +27,14 @@ class CurlDownloader(object):
         self._cfg = config
 
     def download(self, url, toFile):
-        proc = Popen(["curl", "-s", 
-                      "-o", toFile, 
+        proc = Popen(["curl", "-s",
+                      "-o", toFile,
                       "-w", '%{http_code}',
                       url], stdout=PIPE)
         output, unused_err = proc.communicate()
-        retcode = proc.poll()
+        proc.poll()
         if output and \
-                (output.startswith('4') or 
+                (output.startswith('4') or
                  output.startswith('5')):
             raise RuntimeError("curl says [%s]" % output)
 
@@ -77,15 +78,15 @@ class DirectoryCacheManager(BaseCacheManager):
         if (os.path.exists(path) and
                 not self._hashUtil.does_hash_match(digest, path)):
             print "File already exists in the cache, but the digest " \
-                    "does not match.  Will update the cache if the " \
-                    "underlying file system supports it."
+                  "does not match.  Will update the cache if the " \
+                  "underlying file system supports it."
         shutil.copy(fileToCache, path)
 
     def delete(self, key):
         path = os.path.join(self._baseDir, key)
         if os.path.exists(path):
             print "You are trying to delete a file from the cache " \
-                    "this is not supported for all file systems."
+                  "this is not supported for all file systems."
         os.remove(path)
 
     def exists(self, key, digest):
@@ -129,5 +130,3 @@ class ShaHashUtil(HashUtil):
             return output.strip().split(' ')[0]
         elif retcode == 1:
             raise ValueError(err.split('\n')[0])
-
-
