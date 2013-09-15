@@ -1,12 +1,15 @@
+import sys
 import os
 import os.path
 import urllib2
+import json
 import hashlib
 import shutil
 import gzip
 import bz2
 import tarfile
 import zipfile
+import tempfile
 from functools import partial
 from subprocess import Popen
 from subprocess import PIPE
@@ -195,3 +198,29 @@ class UnzipUtil(object):
         if not method:
             method = self._pick_based_on_file_extension(zipFile)
         return method(zipFile, intoDir)
+
+
+class CloudFoundryUtil(object):
+    def __init__(self):
+        # Open stdout unbuffered
+        if hasattr(sys.stdout, 'fileno'):
+            sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+        # User's Application Files, build droplet here
+        self.BUILD_DIR = (len(sys.argv) >= 2) and sys.argv[1] or None
+        # Cache space for the build pack
+        self.CACHE_DIR = (len(sys.argv) >= 3) and sys.argv[2] or None
+        # Temp space
+        self.TEMP_DIR = os.environ.get('TMPDIR', tempfile.gettempdir())
+        # Build Pack Location
+        self.BP_DIR = os.path.dirname(os.path.dirname(sys.argv[0]))
+        # Memory Limit
+        self.MEMORY_LIMIT = os.environ.get('MEMORY_LIMIT', None)
+        # Make sure cache & build directories exist
+        if not os.path.exists(self.BUILD_DIR):
+            os.makedirs(self.BUILD_DIR)
+        if not os.path.exists(self.CACHE_DIR):
+            os.makedirs(self.CACHE_DIR)
+
+    def load_json_config_file(self, cfgPath):
+        with open(cfgPath, 'rt') as cfgFile:
+            return json.load(cfgFile)
