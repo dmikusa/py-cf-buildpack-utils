@@ -1,4 +1,5 @@
 import build_pack_utils
+import sys
 import urllib2
 import os.path
 import tempfile
@@ -273,3 +274,46 @@ class TestUnzipUtil(object):
             uzUtil._pick_based_on_file_extension(self.HASH_FILE_TARGZ)
         assert uzUtil._tar_bunzip2 == \
             uzUtil._pick_based_on_file_extension(self.HASH_FILE_TARBZ2)
+
+
+class TestCloudFoundryUtil(object):
+
+    def setUp(self):
+        self.old_sys_argv = sys.argv
+        sys.argv = [
+            '/tmp/buildpacks/my-buildpack/bin/compile',
+            os.path.join(tempfile.gettempdir(), '/tmp/staged/app'),
+            os.path.join(tempfile.gettempdir(), '/tmp/cache')]
+        os.environ['MEMORY_LIMIT'] = '64m'
+        os.environ['TMPDIR'] = '/tmp'
+
+    def tearDown(self):
+        path = os.path.join(tempfile.gettempdir(), '/tmp/staged/app')
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        path = os.path.join(tempfile.gettempdir(), '/tmp/cache')
+        if os.path.exists(path):
+            shutil.rmtree(path)
+        sys.argv = self.old_sys_argv
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_load_env(self):
+        cf = build_pack_utils.CloudFoundryUtil()
+        assert '/tmp/staged/app' == cf.BUILD_DIR
+        assert '/tmp/cache' == cf.CACHE_DIR
+        assert '/tmp' == cf.TEMP_DIR
+        assert '/tmp/buildpacks/my-buildpack' == cf.BP_DIR
+        assert '64m' == cf.MEMORY_LIMIT
+        assert os.path.exists(cf.BUILD_DIR)
+        assert os.path.exists(cf.CACHE_DIR)
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_load_json_config_file(self):
+        cf = build_pack_utils.CloudFoundryUtil()
+        cfg = cf.load_json_config_file('./test/data/config.json')
+        assert cfg['int'] == 5
+        assert cfg['string'] == '1234'
+        assert len(cfg['list']) == 5
+        assert cfg['list'][3] == 4
+        assert 'y' in cfg['map'].keys()
+        assert cfg['map']['z'] == 3
