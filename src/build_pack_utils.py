@@ -52,6 +52,9 @@ class BaseCacheManager(object):
     def put(self, key, fileToCache):
         pass
 
+    def delete(self, key):
+        pass
+
     def exists(self, key, digest):
         return False
 
@@ -60,14 +63,16 @@ class DirectoryCacheManager(BaseCacheManager):
 
     def __init__(self, config):
         BaseCacheManager.__init__(self, config)
-        self._baseDir = self._cfg['file-cache-base-directory']
+        self._baseDir = config['file-cache-base-directory']
+        if not os.path.exists(self._baseDir):
+            os.makedirs(self._baseDir)
 
     def get(self, key, digest):
         path = os.path.join(self._baseDir, key)
         if self.exists(key, digest):
             return path
 
-    def put(self, key, fileToCache):
+    def put(self, key, fileToCache, digest):
         path = os.path.join(self._baseDir, key)
         if (os.path.exists(path) and
                 not self._hashUtil.does_hash_match(digest, path)):
@@ -75,6 +80,13 @@ class DirectoryCacheManager(BaseCacheManager):
                     "does not match.  Will update the cache if the " \
                     "underlying file system supports it."
         shutil.copy(fileToCache, path)
+
+    def delete(self, key):
+        path = os.path.join(self._baseDir, key)
+        if os.path.exists(path):
+            print "You are trying to delete a file from the cache " \
+                    "this is not supported for all file systems."
+        os.remove(path)
 
     def exists(self, key, digest):
         path = os.path.join(self._baseDir, key)
