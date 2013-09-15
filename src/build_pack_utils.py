@@ -3,6 +3,10 @@ import os.path
 import urllib2
 import hashlib
 import shutil
+import gzip
+import bz2
+import tarfile
+import zipfile
 from functools import partial
 from subprocess import Popen
 from subprocess import PIPE
@@ -130,3 +134,64 @@ class ShaHashUtil(HashUtil):
             return output.strip().split(' ')[0]
         elif retcode == 1:
             raise ValueError(err.split('\n')[0])
+
+
+class UnzipUtil(object):
+
+    def __init__(self, config):
+        self._cfg = config
+
+    def _unzip(self, zipFile, intoDir):
+        with zipfile.ZipFile(zipFile, 'r') as zipIn:
+            zipIn.extractall(intoDir)
+        return intoDir
+
+    def _untar(self, zipFile, intoDir):
+        with tarfile.open(zipFile, 'r:') as tarIn:
+            tarIn.extractall(intoDir)
+        return intoDir
+
+    def _gunzip(self, zipFile, intoDir):
+        path = os.path.join(intoDir, os.path.basename(zipFile)[:-3])
+        with gzip.open(zipFile, 'rb') as zipIn:
+            with open(path, 'wb') as zipOut:
+                for buf in iter(partial(zipIn.read, 8196), ''):
+                    zipOut.write(buf)
+        return path
+
+    def _bunzip2(self, zipFile, intoDir):
+        path = os.path.join(intoDir, os.path.basename(zipFile)[:-4])
+        with bz2.BZ2File(zipFile, 'rb') as zipIn:
+            with open(path, 'wb') as zipOut:
+                for buf in iter(partial(zipIn.read, 8196), ''):
+                    zipOut.write(buf)
+        return path
+
+    def _tar_gunzip(self, zipFile, intoDir):
+        with tarfile.open(zipFile, 'r:gz') as tarIn:
+            tarIn.extractall(intoDir)
+        return intoDir
+
+    def _tar_bunzip2(self, zipFile, intoDir):
+        with tarfile.open(zipFile, 'r:bz2') as tarIn:
+            tarIn.extractall(intoDir)
+        return intoDir
+
+    def _pick_based_on_file_extension(self, zipFile):
+        if zipFile.endswith('.tar.gz') or zipFile.endswith('.tgz'):
+            return self._tar_gunzip
+        if zipFile.endswith('.tar.bz2'):
+            return self._tar_bunzip2
+        if zipFile.endswith('.tar'):
+            return self._untar
+        if zipFile.endswith('.gz'):
+            return self._gunzip
+        if zipFile.endswith('.bz2'):
+            return self._bunzip2
+        if zipFile.endswith('.zip') and zipfile.is_zipfile(zipFile):
+            return self._unzip
+
+    def extract(self, zipFile, intoDir, method=None):
+        if not method:
+            method = self._pick_based_on_file_extension(zipFile)
+        return method(zipFile, intoDir)
