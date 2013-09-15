@@ -2,6 +2,7 @@ import build_pack_utils
 import urllib2
 import os.path
 import tempfile
+import shutil
 from nose.tools import *
 
 class TestDownloaderUtils(object):
@@ -152,12 +153,21 @@ class TestDirectoryCacheManager(object):
     def __init__(self):
         self._hshUtil = build_pack_utils.HashUtil({'cache-hash-algorithm': 'sha256'})
 
+    def tearDown(self):
+        path = os.path.join(tempfile.gettempdir(), 'junk.txt')
+        if os.path.exists(path):
+            os.remove(path)
+        path = os.path.join(tempfile.gettempdir(), 'DCM')
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
     def create_junk_file(self, fileName):
         path = os.path.join(tempfile.gettempdir(), fileName)
         with open(path, 'w') as tmp:
             tmp.write("Hello World!")
         return (path, self._hshUtil.calculate_hash(path))
 
+    @with_setup(teardown=tearDown)
     def test_basics(self):
         path = os.path.join(tempfile.gettempdir(), "DCM")
         dcm = build_pack_utils.DirectoryCacheManager({
