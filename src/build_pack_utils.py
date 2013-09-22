@@ -224,3 +224,46 @@ class CloudFoundryUtil(object):
     def load_json_config_file(self, cfgPath):
         with open(cfgPath, 'rt') as cfgFile:
             return json.load(cfgFile)
+
+
+class CloudFoundryInstaller(object):
+    def __init__(self, cfgFile):
+        self._cf = CloudFoundryUtil()
+        self._cfg = self._cf.load_json_config_file(cfgFile)
+        self._unzipUtil = UnzipUtil(self._cfg)
+        self._hashUtil = HashUtil(self._cfg)
+        self._dcm = DirectoryCacheManager(self._cfg)
+        self._dwn = Downloader(self._cfg)
+
+    def install_binary(self, fromKey, fileName, digest):
+        # check cache & compare digest
+        # use cached file or download new
+        # download based on cfg settings
+        fileToInstall = self._dcm.get(fileName, digest)
+        if fileToInstall is None:
+            fileToInstall = os.path.join(self._cf.CACHE_DIR, fileName)
+            self._dwn.download(
+                os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % fromKey], fileName),
+                fileToInstall)
+            digest = self._hashUtil.calculate_hash(fileToInstall)
+            self._dcm.put(fileName, fileToInstall, digest)
+        # unzip
+        # install to cfg determined location 'PACKAGE_INSTALL_DIR'
+        #  into or CF's BUILD_DIR
+        if 'PACKAGE_INSTALL_DIR' in self._cfg.keys():
+            installIntoDir = os.path.join(self._cfg['PACKAGE_INSTALL_DIR'],
+                                          fileName.split('.')[0])
+        else:
+            installIntoDir = os.path.join(self._cf.BUILD_DIR,
+                                          fileName.split('.')[0])
+        self._unzipUtil.extract(fileToInstall, installIntoDir)
+
+    def install_from_build_pack(self, bpFile, toLocation):
+        # copy from build pack to location
+        # handle one or list of files
+        pass
+
+    def install_from_application(self, cfgFile, toLocation):
+        # copy application file to location
+        # handle one or list of files
+        pass

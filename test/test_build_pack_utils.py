@@ -8,6 +8,7 @@ from nose.tools import raises
 from nose.tools import eq_
 from nose.tools import with_setup
 from nose.tools import assert_raises
+from dingus import Dingus
 
 
 class TestDownloaderUtils(object):
@@ -317,3 +318,78 @@ class TestCloudFoundryUtil(object):
         assert cfg['list'][3] == 4
         assert 'y' in cfg['map'].keys()
         assert cfg['map']['z'] == 3
+
+
+class TestCloudFoundryInstaller(object):
+    def setUp(self):
+        self.old_sys_argv = sys.argv
+        sys.argv = [
+            '/tmp/buildpacks/my-buildpack/bin/compile',
+            os.path.join(tempfile.gettempdir(), '/tmp/staged/app'),
+            os.path.join(tempfile.gettempdir(), '/tmp/cache')]
+        os.environ['MEMORY_LIMIT'] = '64m'
+
+    @with_setup(setup=setUp)
+    def test_install_binary_cached(self):
+        # Setup mocks
+        #  use __new__ to skip constructor, we set that up here
+        installer = object.__new__(build_pack_utils.CloudFoundryInstaller)
+        installer._cf = Dingus('cf')
+        installer._cfg = {
+            'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
+            'PACKAGE_INSTALL_DIR': '/tmp/packages'
+        }
+        installer._unzipUtil = Dingus('unzip')
+        installer._hashUtil = Dingus('hash',
+                                     calculate_hash__returns='1234WXYZ')
+        installer._dcm = Dingus('dcm', get__returns=None)
+        installer._dwn = Dingus('download')
+        # Run test
+        installer.install_binary('LOCAL', 'tomcat.tar.gz', '1234WXYZ')
+        # Verify execution path, file is not cached
+        # Cache manager checks for file
+        assert installer._dcm.get.calls().once()
+        assert None is installer._dcm.calls('get')[0].return_value
+        # download is called once with file path
+        assert installer._dwn.download.calls().once()
+        assert 'PREFIX/tomcat.tar.gz' == \
+            installer._dwn.calls('download')[0].args[0]
+        # hash is called with file path
+        assert installer._hashUtil.calculate_hash.calls().once()
+        calls = installer._hashUtil.calls('calculate_hash')
+        assert calls[0].args[0].endswith('tomcat.tar.gz')
+        # cache manager is called with key and digest
+        assert installer._dcm.put.calls().once()
+        assert 'tomcat.tar.gz' == installer._dcm.calls('put')[0].args[0]
+        assert '1234WXYZ' == installer._dcm.calls('put')[0].args[2]
+        # file is extracted
+        assert installer._unzipUtil.extract.calls().once()
+
+    @with_setup(setup=setUp)
+    def test_install_binary_not_cached(self):
+        # Setup mocks
+        #  use __new__ to skip constructor, we set that up here
+        installer = object.__new__(build_pack_utils.CloudFoundryInstaller)
+        installer._cf = Dingus('cf')
+        installer._cfg = {
+            'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
+            'PACKAGE_INSTALL_DIR': '/tmp/packages'
+        }
+        installer._unzipUtil = Dingus('unzip')
+        installer._hashUtil = Dingus('hash',
+                                     calculate_hash__returns='1234WXYZ')
+        installer._dcm = Dingus('dcm', get__returns='/tmp/cache/tomcat.tar.gz')
+        installer._dwn = Dingus('download')
+        # Run test
+        installer.install_binary('LOCAL', 'tomcat.tar.gz', '1234WXYZ')
+        # Verify execution path, file is not cached
+        # Cache manager checks for file
+        assert installer._dcm.get.calls().once()
+        assert '/tmp/cache/tomcat.tar.gz' == \
+            installer._dcm.calls('get')[0].return_value
+        # make sure download section is skipped
+        assert 0 == len(installer._dwn.calls('download'))
+        assert 0 == len(installer._hashUtil.calls('calculate_hash'))
+        assert 0 == len(installer._dcm.calls('put'))
+        # file is extracted
+        assert installer._unzipUtil.extract.calls().once()
