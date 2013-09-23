@@ -320,16 +320,7 @@ class TestCloudFoundryUtil(object):
         assert cfg['map']['z'] == 3
 
 
-class TestCloudFoundryInstaller(object):
-    def setUp(self):
-        self.old_sys_argv = sys.argv
-        sys.argv = [
-            '/tmp/buildpacks/my-buildpack/bin/compile',
-            os.path.join(tempfile.gettempdir(), '/tmp/staged/app'),
-            os.path.join(tempfile.gettempdir(), '/tmp/cache')]
-        os.environ['MEMORY_LIMIT'] = '64m'
-
-    @with_setup(setup=setUp)
+class TestCloudFoundryInstallerBinaries(object):
     def test_install_binary_cached(self):
         # Setup mocks
         #  use __new__ to skip constructor, we set that up here
@@ -365,7 +356,6 @@ class TestCloudFoundryInstaller(object):
         # file is extracted
         assert installer._unzipUtil.extract.calls().once()
 
-    @with_setup(setup=setUp)
     def test_install_binary_not_cached(self):
         # Setup mocks
         #  use __new__ to skip constructor, we set that up here
@@ -393,3 +383,65 @@ class TestCloudFoundryInstaller(object):
         assert 0 == len(installer._dcm.calls('put'))
         # file is extracted
         assert installer._unzipUtil.extract.calls().once()
+
+
+class TestCloudFoundryInstallerConfig(object):
+    def setUp(self):
+        self._tmpDir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if self._tmpDir:
+            shutil.rmtree(self._tmpDir)
+
+    def assertFileExistsAndDelete(self, filePath):
+        assert os.path.exists(filePath)
+        os.remove(filePath)
+        assert not os.path.exists(filePath)
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_install_from_build_pack(self):
+        # Setup mocks
+        #  use __new__ to skip constructor, we set that up here
+        installer = object.__new__(build_pack_utils.CloudFoundryInstaller)
+        installer._cf = Dingus(
+            'cf',
+            BP_DIR='./test/data',
+            BUILD_DIR=self._tmpDir)
+        # Test copying files from build pack
+        tmpConfig = os.path.join(self._tmpDir, 'config.json')
+        # test with default toLocation
+        installer.install_from_build_pack('config.json')
+        self.assertFileExistsAndDelete(tmpConfig)
+        # test when toLocation is same as default
+        installer.install_from_build_pack('config.json', 'config.json')
+        self.assertFileExistsAndDelete(tmpConfig)
+        # test when toLocation is different
+        installer.install_from_build_pack('config.json', 'renamed.json')
+        self.assertFileExistsAndDelete(
+            os.path.join(self._tmpDir, 'renamed.json'))
+        # test when toLocation is nested path
+        installer.install_from_build_pack('config.json',
+                                          'in/a/path/renamed.json')
+        self.assertFileExistsAndDelete(
+            os.path.join(self._tmpDir, 'in/a/path/renamed.json'))
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_install_from_app(self):
+        # Setup mocks
+        #  use __new__ to skip constructor, we set that up here
+        installer = object.__new__(build_pack_utils.CloudFoundryInstaller)
+        installer._cf = Dingus(
+            'cf',
+            BP_DIR='./test/data',
+            BUILD_DIR=self._tmpDir)
+        # Add file to temp dir
+        installer.install_from_build_pack('config.json')
+        # Test copying files from app
+        installer.install_from_application('config.json', 'renamed.json')
+        self.assertFileExistsAndDelete(
+            os.path.join(self._tmpDir, 'renamed.json'))
+        # Test with nested path
+        installer.install_from_application(
+            'config.json', 'in/a/path/renamed.json')
+        self.assertFileExistsAndDelete(
+            os.path.join(self._tmpDir, 'in/a/path/renamed.json'))

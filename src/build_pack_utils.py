@@ -235,6 +235,15 @@ class CloudFoundryInstaller(object):
         self._dcm = DirectoryCacheManager(self._cfg)
         self._dwn = Downloader(self._cfg)
 
+    @staticmethod
+    def _safe_makedirs(path):
+        try:
+            os.makedirs(path)
+        except OSError, e:
+            # Ignore if it exists
+            if e.errno != 17:
+                raise e
+
     def install_binary(self, fromKey, fileName, digest):
         # check cache & compare digest
         # use cached file or download new
@@ -243,7 +252,8 @@ class CloudFoundryInstaller(object):
         if fileToInstall is None:
             fileToInstall = os.path.join(self._cf.CACHE_DIR, fileName)
             self._dwn.download(
-                os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % fromKey], fileName),
+                os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % fromKey],
+                             fileName),
                 fileToInstall)
             digest = self._hashUtil.calculate_hash(fileToInstall)
             self._dcm.put(fileName, fileToInstall, digest)
@@ -258,12 +268,34 @@ class CloudFoundryInstaller(object):
                                           fileName.split('.')[0])
         self._unzipUtil.extract(fileToInstall, installIntoDir)
 
-    def install_from_build_pack(self, bpFile, toLocation):
-        # copy from build pack to location
-        # handle one or list of files
-        pass
+    def install_from_build_pack(self, bpFile, toLocation=None):
+        """Copy file from the build pack to the droplet
+
+        Copies a file from the build pack to the application droplet.
+
+            bpFile     -> file to copy, relative build pack
+            toLocation -> optional location where to copy the file
+                          relative to app droplet.  If not specified
+                          uses the bpFile path.
+        """
+        fullPathFrom = os.path.join(self._cf.BP_DIR, bpFile)
+        fullPathTo = os.path.join(
+            self._cf.BUILD_DIR,
+            ((toLocation is None) and bpFile or toLocation))
+        self._safe_makedirs(os.path.dirname(fullPathTo))
+        shutil.copy(fullPathFrom, fullPathTo)
 
     def install_from_application(self, cfgFile, toLocation):
-        # copy application file to location
-        # handle one or list of files
-        pass
+        """Copy file from one place to another in the application
+
+        Copies a file from one place to another place within the
+        application droplet.
+
+            cfgFile    -> file to copy, relative build pack
+            toLocation -> location where to copy the file,
+                          relative to app droplet.
+        """
+        fullPathFrom = os.path.join(self._cf.BUILD_DIR, cfgFile)
+        fullPathTo = os.path.join(self._cf.BUILD_DIR, toLocation)
+        self._safe_makedirs(os.path.dirname(fullPathTo))
+        shutil.copy(fullPathFrom, fullPathTo)
