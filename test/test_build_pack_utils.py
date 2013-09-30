@@ -60,9 +60,11 @@ class TestHashUtils(object):
         assert not hsh.does_hash_match(digest, self.HASH_FILE)
 
     def hash_file_bad_algorithm(self, hsh, algorithm, msg):
-        with assert_raises(ValueError) as cm:
+        try:
             hsh.calculate_hash(self.HASH_FILE)
-        eq_(msg, cm.exception.message)
+            assert False ## Should not happen
+        except ValueError, ex:
+            eq_(msg, ex.args[0])
 
     # Test hashlib
     def test_hash_util_sha1(self):
@@ -99,15 +101,15 @@ class TestHashUtils(object):
 
     def test_hash_util_empty_algorithms(self):
         hsh = build_pack_utils.HashUtil({'cache-hash-algorithm': ''})
-        self.hash_file_bad_algorithm(hsh, '', 'unsupported hash type ')
+        self.hash_file_bad_algorithm(hsh, '', 'unsupported hash type')
 
     def test_hash_util_bad_algorithm(self):
         hsh = build_pack_utils.HashUtil({'cache-hash-algorithm': '???'})
-        self.hash_file_bad_algorithm(hsh, '???', 'unsupported hash type ???')
+        self.hash_file_bad_algorithm(hsh, '???', 'unsupported hash type')
 
     def test_hash_util_missing_algorithm(self):
         hsh = build_pack_utils.HashUtil({'cache-hash-algorithm': '2'})
-        self.hash_file_bad_algorithm(hsh, '2', 'unsupported hash type 2')
+        self.hash_file_bad_algorithm(hsh, '2', 'unsupported hash type')
 
     # Test External SHA
     def test_sha_hash_util_sha1(self):

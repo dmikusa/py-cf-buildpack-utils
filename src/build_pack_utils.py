@@ -145,39 +145,63 @@ class UnzipUtil(object):
         self._cfg = config
 
     def _unzip(self, zipFile, intoDir):
-        with zipfile.ZipFile(zipFile, 'r') as zipIn:
+        try:
+            zipIn = zipfile.ZipFile(zipFile, 'r')
             zipIn.extractall(intoDir)
+        finally:
+            if zipIn:
+                zipIn.close()
         return intoDir
 
     def _untar(self, zipFile, intoDir):
-        with tarfile.open(zipFile, 'r:') as tarIn:
+        try:
+            tarIn = tarfile.open(zipFile, 'r:')
             tarIn.extractall(intoDir)
+        finally:
+            if tarIn:
+                tarIn.close()
         return intoDir
 
     def _gunzip(self, zipFile, intoDir):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-3])
-        with gzip.open(zipFile, 'rb') as zipIn:
+        try:
+            zipIn = gzip.open(zipFile, 'rb')
             with open(path, 'wb') as zipOut:
                 for buf in iter(partial(zipIn.read, 8196), ''):
                     zipOut.write(buf)
+        finally:
+            if zipIn:
+                zipIn.close()
         return path
 
     def _bunzip2(self, zipFile, intoDir):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-4])
-        with bz2.BZ2File(zipFile, 'rb') as zipIn:
+        try:
+            zipIn = bz2.BZ2File(zipFile, 'rb')
             with open(path, 'wb') as zipOut:
                 for buf in iter(partial(zipIn.read, 8196), ''):
                     zipOut.write(buf)
+        finally:
+            if zipIn:
+                zipIn.close()
         return path
 
     def _tar_gunzip(self, zipFile, intoDir):
-        with tarfile.open(zipFile, 'r:gz') as tarIn:
+        try:
+            tarIn = tarfile.open(zipFile, 'r:gz')
             tarIn.extractall(intoDir)
+        finally:
+            if tarIn:
+                tarIn.close()
         return intoDir
 
     def _tar_bunzip2(self, zipFile, intoDir):
-        with tarfile.open(zipFile, 'r:bz2') as tarIn:
+        try:
+            tarIn = tarfile.open(zipFile, 'r:bz2')
             tarIn.extractall(intoDir)
+        finally:
+            if tarIn:
+                tarIn.close()
         return intoDir
 
     def _pick_based_on_file_extension(self, zipFile):
