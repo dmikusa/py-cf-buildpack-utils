@@ -2,6 +2,7 @@
 import os.path
 from distutils.core import setup
 
+
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -25,4 +26,3 @@ setup(name='py-cf-buildpack-utils',
       package_dir={'': 'src'},
       py_modules=['build_pack_utils'],
       long_description=read('README'))
-

@@ -7,7 +7,6 @@ import shutil
 from nose.tools import raises
 from nose.tools import eq_
 from nose.tools import with_setup
-from nose.tools import assert_raises
 from dingus import Dingus
 
 
@@ -62,7 +61,7 @@ class TestHashUtils(object):
     def hash_file_bad_algorithm(self, hsh, algorithm, msg):
         try:
             hsh.calculate_hash(self.HASH_FILE)
-            assert False ## Should not happen
+            assert False  # Should not happen
         except ValueError, ex:
             eq_(msg, ex.args[0])
 
