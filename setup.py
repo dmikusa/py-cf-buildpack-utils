@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import os.path
 from distutils.core import setup
 
 def read(fname):
