@@ -1,0 +1,6 @@
+Python Build Pack Utilities for CloudFoundry
+--------------------------------------------
+
+This package provides some standard utilities which can be used to
+create build packs for CloudFoundry v2 using Python.
+
