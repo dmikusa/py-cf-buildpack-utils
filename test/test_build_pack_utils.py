@@ -320,6 +320,17 @@ class TestCloudFoundryUtil(object):
         assert 'y' in cfg['map'].keys()
         assert cfg['map']['z'] == 3
 
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_load_json_config_file_from(self):
+        cf = build_pack_utils.CloudFoundryUtil()
+        cfg = cf.load_json_config_file_from('./test/data/', 'config.json')
+        assert cfg['int'] == 5
+        assert cfg['string'] == '1234'
+        assert len(cfg['list']) == 5
+        assert cfg['list'][3] == 4
+        assert 'y' in cfg['map'].keys()
+        assert cfg['map']['z'] == 3
+
 
 class TestCloudFoundryInstallerBinaries(object):
     def test_install_binary_cached(self):
