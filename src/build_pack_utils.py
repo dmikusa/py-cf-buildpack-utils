@@ -255,13 +255,13 @@ class CloudFoundryUtil(object):
 
 
 class CloudFoundryInstaller(object):
-    def __init__(self, cfgFile):
-        self._cf = CloudFoundryUtil()
-        self._cfg = self._cf.load_json_config_file(cfgFile)
-        self._unzipUtil = UnzipUtil(self._cfg)
-        self._hashUtil = HashUtil(self._cfg)
-        self._dcm = DirectoryCacheManager(self._cfg)
-        self._dwn = Downloader(self._cfg)
+    def __init__(self, cf, cfg):
+        self._cf = cf
+        self._cfg = cfg
+        self._unzipUtil = UnzipUtil(cfg)
+        self._hashUtil = HashUtil(cfg)
+        self._dcm = DirectoryCacheManager(cfg)
+        self._dwn = Downloader(cfg)
 
     @staticmethod
     def _safe_makedirs(path):
