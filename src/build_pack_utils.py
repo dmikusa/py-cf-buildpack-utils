@@ -272,7 +272,9 @@ class CloudFoundryInstaller(object):
             if e.errno != 17:
                 raise e
 
-    def install_binary(self, fromKey, fileName, digest):
+    def install_binary(self, installKey):
+        fileName = self._cfg['%s_PACKAGE' % installKey]
+        digest = self._cfg['%s_PACKAGE_HASH' % installKey]
         # check cache & compare digest
         # use cached file or download new
         # download based on cfg settings
@@ -280,7 +282,7 @@ class CloudFoundryInstaller(object):
         if fileToInstall is None:
             fileToInstall = os.path.join(self._cf.CACHE_DIR, fileName)
             self._dwn.download(
-                os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % fromKey],
+                os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % installKey],
                              fileName),
                 fileToInstall)
             digest = self._hashUtil.calculate_hash(fileToInstall)
@@ -288,13 +290,15 @@ class CloudFoundryInstaller(object):
         # unzip
         # install to cfg determined location 'PACKAGE_INSTALL_DIR'
         #  into or CF's BUILD_DIR
-        if 'PACKAGE_INSTALL_DIR' in self._cfg.keys():
-            installIntoDir = os.path.join(self._cfg['PACKAGE_INSTALL_DIR'],
+        pkgKey = '%s_PACKAGE_INSTALL_DIR' % installKey
+        if pkgKey in self._cfg.keys():
+            installIntoDir = os.path.join(self._cfg[pkgKey],
                                           fileName.split('.')[0])
         else:
             installIntoDir = os.path.join(self._cf.BUILD_DIR,
                                           fileName.split('.')[0])
         self._unzipUtil.extract(fileToInstall, installIntoDir)
+        return installIntoDir
 
     def install_from_build_pack(self, bpFile, toLocation=None):
         """Copy file from the build pack to the droplet

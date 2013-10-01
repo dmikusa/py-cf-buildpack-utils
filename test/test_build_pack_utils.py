@@ -337,10 +337,14 @@ class TestCloudFoundryInstallerBinaries(object):
         # Setup mocks
         #  use __new__ to skip constructor, we set that up here
         installer = object.__new__(build_pack_utils.CloudFoundryInstaller)
-        installer._cf = Dingus('cf')
+        installer._cf = Dingus('cf',
+                               BUILD_DIR='/tmp/build_dir',
+                               CACHE_DIR='/tmp/cache_dir')
         installer._cfg = {
+            'LOCAL_PACKAGE': 'tomcat.tar.gz',
+            'LOCAL_PACKAGE_HASH': '1234WXYZ',
             'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
-            'PACKAGE_INSTALL_DIR': '/tmp/packages'
+            'LOCAL_PACKAGE_INSTALL_DIR': '/tmp/packages'
         }
         installer._unzipUtil = Dingus('unzip')
         installer._hashUtil = Dingus('hash',
@@ -348,7 +352,7 @@ class TestCloudFoundryInstallerBinaries(object):
         installer._dcm = Dingus('dcm', get__returns=None)
         installer._dwn = Dingus('download')
         # Run test
-        installer.install_binary('LOCAL', 'tomcat.tar.gz', '1234WXYZ')
+        instDir = installer.install_binary('LOCAL')
         # Verify execution path, file is not cached
         # Cache manager checks for file
         assert installer._dcm.get.calls().once()
@@ -367,15 +371,20 @@ class TestCloudFoundryInstallerBinaries(object):
         assert '1234WXYZ' == installer._dcm.calls('put')[0].args[2]
         # file is extracted
         assert installer._unzipUtil.extract.calls().once()
+        # verify installation directory
+        eq_('/tmp/packages/tomcat', instDir)
 
     def test_install_binary_not_cached(self):
         # Setup mocks
         #  use __new__ to skip constructor, we set that up here
         installer = object.__new__(build_pack_utils.CloudFoundryInstaller)
-        installer._cf = Dingus('cf')
+        installer._cf = Dingus('cf',
+                               BUILD_DIR='/tmp/build_dir',
+                               CACHE_DIR='/tmp/cache_dir')
         installer._cfg = {
+            'LOCAL_PACKAGE': 'tomcat.tar.gz',
+            'LOCAL_PACKAGE_HASH': '1234WXYZ',
             'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
-            'PACKAGE_INSTALL_DIR': '/tmp/packages'
         }
         installer._unzipUtil = Dingus('unzip')
         installer._hashUtil = Dingus('hash',
@@ -383,7 +392,7 @@ class TestCloudFoundryInstallerBinaries(object):
         installer._dcm = Dingus('dcm', get__returns='/tmp/cache/tomcat.tar.gz')
         installer._dwn = Dingus('download')
         # Run test
-        installer.install_binary('LOCAL', 'tomcat.tar.gz', '1234WXYZ')
+        instDir = installer.install_binary('LOCAL')
         # Verify execution path, file is not cached
         # Cache manager checks for file
         assert installer._dcm.get.calls().once()
@@ -395,6 +404,7 @@ class TestCloudFoundryInstallerBinaries(object):
         assert 0 == len(installer._dcm.calls('put'))
         # file is extracted
         assert installer._unzipUtil.extract.calls().once()
+        eq_('/tmp/build_dir/tomcat', instDir)
 
 
 class TestCloudFoundryInstallerConfig(object):
