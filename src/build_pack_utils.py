@@ -245,9 +245,13 @@ class CloudFoundryUtil(object):
         if not os.path.exists(self.CACHE_DIR):
             os.makedirs(self.CACHE_DIR)
 
+    def load_json_config_file_from(self, folder, cfgFile):
+        return self.load_json_config_file(os.path.join(folder, cfgFile))
+
     def load_json_config_file(self, cfgPath):
-        with open(cfgPath, 'rt') as cfgFile:
-            return json.load(cfgFile)
+        if os.path.exists(cfgPath):
+            with open(cfgPath, 'rt') as cfgFile:
+                return json.load(cfgFile)
 
 
 class CloudFoundryInstaller(object):
