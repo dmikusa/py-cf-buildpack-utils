@@ -467,3 +467,36 @@ class TestCloudFoundryInstallerConfig(object):
             'config.json', 'in/a/path/renamed.json')
         self.assertFileExistsAndDelete(
             os.path.join(self._tmpDir, 'in/a/path/renamed.json'))
+
+
+class TestCloudFoundryRunner(object):
+    # these tests will fai on Windows, requires "ls" command
+
+    def test_run_from_directory(self):
+        cwd = os.getcwd()
+        (retcode, stdout, stderr) = \
+            build_pack_utils.CloudFoundryRunner.run_from_directory(
+                './test/data/', 'ls', ['-la'], shell=True)
+        eq_(stderr, '')
+        eq_(stdout, 'HASH\nHASH.bz2\nHASH.gz\nHASH.tar\nHASH.tar.bz2\n'
+                    'HASH.tar.gz\nHASH.zip\nconfig.json\n')
+        eq_(retcode, 0)
+        eq_(cwd, os.getcwd())
+
+    def test_run_from_directory_error(self):
+        cwd = os.getcwd()
+        (retcode, stdout, stderr) = \
+            build_pack_utils.CloudFoundryRunner.run_from_directory(
+                './test/data/', 'ls', ['-la', '/doesnt/exist'], shell=False)
+        eq_(stderr, 'ls: /doesnt/exist: No such file or directory\n')
+        eq_(stdout, '')
+        eq_(retcode, 1)
+        eq_(cwd, os.getcwd())
+
+    def test_run_from_directory_that_doesnt_exist(self):
+        assert None is \
+            build_pack_utils.CloudFoundryRunner.run_from_directory(
+                '/doesnt/exist', 'ls', ['-la'], shell=False)
+        assert None is \
+            build_pack_utils.CloudFoundryRunner.run_from_directory(
+                '/doesnt/exist', 'ls', ['-la'], shell=True)
