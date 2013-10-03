@@ -57,10 +57,3 @@ class BuildPackWrapper(object):
         for arg in args:
             cfg.update(arg)
         return cfg
-
-
-# Wraps a method on a class and exposes it as a function
-def api_method(method, obj):
-    def wrapper_method(*args, **kwargs):
-        return method(obj, *args, **kwargs)
-    return wrapper_method

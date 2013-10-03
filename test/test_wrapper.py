@@ -148,25 +148,3 @@ class TestBuildPackWrapperConfig(object):
         assert 'y' in self.bpw.cfg.keys()
         assert '4321' == self.bpw.cfg['y']
         assert instId != id(self.bpw.installer)
-
-
-class TestApiMethodWrapper(object):
-    def __init__(self):
-        self.counter = 0
-
-    def some_method(self, a, b):
-        self.counter += (a + b)
-        return (a + b)
-
-    def test_api_method(self):
-        x = api_method(TestApiMethodWrapper.some_method, self)
-        assert 3 == x(1, 2)
-        assert 3 == self.counter
-        assert 5 == x(2, 3)
-        assert 8 == self.counter
-        try:
-            x(1, 3, 3)
-            assert False
-        except TypeError, e:
-            assert 'some_method() takes exactly 3 arguments (4 given)' == \
-                e.args[0]
