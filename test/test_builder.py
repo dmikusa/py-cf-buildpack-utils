@@ -1,18 +1,18 @@
 import os
 from nose.tools import eq_
-from build_pack_utils import CloudFoundryRunner
-from build_pack_utils import BuildPackWrapper
+from build_pack_utils import Runner
+from build_pack_utils import Builder
 from build_pack_utils import CloudFoundryUtil
 from build_pack_utils import api_method
 
 
-class TestCloudFoundryRunner(object):
+class TestRunner(object):
     # these tests will fai on Windows, requires "ls" command
 
     def test_run_from_directory(self):
         cwd = os.getcwd()
         (retcode, stdout, stderr) = \
-            CloudFoundryRunner.run_from_directory(
+            Runner.run_from_directory(
                 './test/data/', 'ls', ['-la'], shell=True)
         eq_(stderr, '')
         eq_(stdout, 'HASH\nHASH.bz2\nHASH.gz\nHASH.tar\nHASH.tar.bz2\n'
@@ -23,7 +23,7 @@ class TestCloudFoundryRunner(object):
     def test_run_from_directory_error(self):
         cwd = os.getcwd()
         (retcode, stdout, stderr) = \
-            CloudFoundryRunner.run_from_directory(
+            Runner.run_from_directory(
                 './test/data/', 'ls', ['-la', '/doesnt/exist'], shell=False)
         eq_(stderr, 'ls: /doesnt/exist: No such file or directory\n')
         eq_(stdout, '')
@@ -32,17 +32,17 @@ class TestCloudFoundryRunner(object):
 
     def test_run_from_directory_that_doesnt_exist(self):
         assert None is \
-            CloudFoundryRunner.run_from_directory(
+            Runner.run_from_directory(
                 '/doesnt/exist', 'ls', ['-la'], shell=False)
         assert None is \
-            CloudFoundryRunner.run_from_directory(
+            Runner.run_from_directory(
                 '/doesnt/exist', 'ls', ['-la'], shell=True)
 
 
-class TestBuildPackWrapperMerge(object):
+class TestBuilderMerge(object):
     def __init__(self):
         # Do this to skip the constructor, not needed
-        self.bpw = object.__new__(BuildPackWrapper)
+        self.bpw = object.__new__(Builder)
 
     def test_merge_one_dict(self):
         res = self.bpw.merge({1: '123', 2: '456'})
@@ -95,10 +95,10 @@ class TestBuildPackWrapperMerge(object):
         assert '0123' == res[3]
 
 
-class TestBuildPackWrapperConfig(object):
+class TestBuilderConfig(object):
     def __init__(self):
         # Do this to skip the constructor, not needed
-        self.bpw = object.__new__(BuildPackWrapper)
+        self.bpw = object.__new__(Builder)
         self.bpw.cf = object.__new__(CloudFoundryUtil)
 
     def test_user_config_default(self):
@@ -148,3 +148,10 @@ class TestBuildPackWrapperConfig(object):
         assert 'y' in self.bpw.cfg.keys()
         assert '4321' == self.bpw.cfg['y']
         assert instId != id(self.bpw.installer)
+
+#
+# Builder().
+#    use().
+#        .default_config()
+#        .user_config('path')
+#

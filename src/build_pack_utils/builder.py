@@ -5,7 +5,7 @@ from cloudfoundry import CloudFoundryUtil
 from cloudfoundry import CloudFoundryInstaller
 
 
-class CloudFoundryRunner(object):
+class Runner(object):
     @staticmethod
     def run_from_directory(folder, command, args, shell=False):
         if os.path.exists(folder):
@@ -22,7 +22,7 @@ class CloudFoundryRunner(object):
                 os.chdir(cwd)
 
 
-class BuildPackWrapper(object):
+class Builder(object):
     def __init__(self):
         # Do this first.  Sets up STDOUT and gives us access to basic info
         #  like build directory, cache directory, memory limit, temp dir,
