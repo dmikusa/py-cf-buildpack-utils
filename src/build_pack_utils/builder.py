@@ -3,8 +3,6 @@ from subprocess import Popen
 from subprocess import PIPE
 from cloudfoundry import CloudFoundryUtil
 from cloudfoundry import CloudFoundryInstaller
-# TODO: look at naming conventions used here
-#        use _ to indicate internal state
 
 
 class Configurer(object):
@@ -58,69 +56,69 @@ class Installer(object):
 
 class Runner(object):
     def __init__(self, builder):
-        self.builder = builder
-        self.path = os.getcwd()
-        self.shell = False
-        self.cmd = []
-        self.on_finish_method = None
-        self.on_success_method = None
-        self.on_fail_method = None
+        self._builder = builder
+        self._path = os.getcwd()
+        self._shell = False
+        self._cmd = []
+        self._on_finish = None
+        self._on_success = None
+        self._on_fail = None
 
     def done(self):
-        if os.path.exists(self.path):
+        if os.path.exists(self._path):
             cwd = os.getcwd()
             try:
-                os.chdir(self.path)
-                proc = Popen(self.cmd, stdout=PIPE,
-                             stderr=PIPE, shell=self.shell)
+                os.chdir(self._path)
+                proc = Popen(self._cmd, stdout=PIPE,
+                             stderr=PIPE, shell=self._shell)
                 stdout, stderr = proc.communicate()
                 retcode = proc.poll()
-                if self.on_finish_method:
-                    self.on_finish_method(self.cmd, retcode, stdout, stderr)
+                if self._on_finish:
+                    self._on_finish(self._cmd, retcode, stdout, stderr)
                 else:
-                    if retcode == 0 and self.on_success:
-                        self.on_success_method(self.cmd, retcode, stdout)
+                    if retcode == 0 and self._on_success:
+                        self._on_success(self._cmd, retcode, stdout)
                     else:
-                        self.on_fail_method(self.cmd, retcode, stderr)
+                        self._on_fail(self._cmd, retcode, stderr)
             finally:
                 os.chdir(cwd)
-        return self.builder
+        return self._builder
 
     def command(self, command, shell=True):
         if hasattr(command, '__call__'):
-            self.cmd = command(self.builder.cfg)
+            self._cmd = command(self._builder.cfg)
         elif hasattr(command, 'split'):
-            self.cmd = command.split(' ')
+            self._cmd = command.split(' ')
         else:
-            self.cmd = command
+            self._cmd = command
         return self
 
     def out_of(self, path):
         if hasattr(path, '__call__'):
-            self.path = path(self.builder.cfg)
-        elif path in self.builder.cfg.keys():
-            self.path = self.builder.cfg[path]
+            self._path = path(self._builder.cfg)
+        elif path in self._builder.cfg.keys():
+            self._path = self._builder.cfg[path]
         else:
-            self.path = path
+            self._path = path
         return self
 
     def with_shell(self):
-        self.shell = True
+        self._shell = True
         return self
 
-    def on_success(self, on_success_method):
-        if hasattr(on_success_method, '__call__'):
-            self.on_success_method = on_success_method
+    def on_success(self, on_success):
+        if hasattr(on_success, '__call__'):
+            self._on_success = on_success
         return self
 
-    def on_fail(self, on_fail_method):
-        if hasattr(on_fail_method, '__call__'):
-            self.on_fail_method = on_fail_method
+    def on_fail(self, on_fail):
+        if hasattr(on_fail, '__call__'):
+            self._on_fail = on_fail
         return self
 
-    def on_finish(self, on_finish_method):
-        if hasattr(on_finish_method, '__call__'):
-            self.on_finish_method = on_finish_method
+    def on_finish(self, on_finish):
+        if hasattr(on_finish, '__call__'):
+            self._on_finish = on_finish
         return self
 
 

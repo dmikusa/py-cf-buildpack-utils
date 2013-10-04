@@ -103,73 +103,73 @@ class TestRunner(object):
         r = Runner(self.builder)
         res = r.command('TEST')
         assert res is r
-        assert ['TEST'] == r.cmd
+        assert ['TEST'] == r._cmd
 
     def test_command_method(self):
         method = Dingus(return_value=['TEST'])
         r = Runner(self.builder)
         res = r.command(method)
         assert res is r
-        assert ['TEST'] == r.cmd
+        assert ['TEST'] == r._cmd
         assert method.calls().once()
 
     def test_command_list(self):
         r = Runner(self.builder)
         res = r.command(['TEST'])
         assert res is r
-        assert ['TEST'] == r.cmd
+        assert ['TEST'] == r._cmd
 
     def test_out_of_string(self):
         r = Runner(self.builder)
         res = r.out_of('TEST')
         assert res is r
-        assert 'TEST' == r.path
+        assert 'TEST' == r._path
 
     def test_out_of_method(self):
         method = Dingus(return_value='TEST')
         r = Runner(self.builder)
         res = r.out_of(method)
         assert res is r
-        assert 'TEST' == r.path
+        assert 'TEST' == r._path
 
     def test_out_of_key(self):
         r = Runner(self.builder)
         res = r.out_of('KEY')
         assert res is r
-        assert 'TEST' == r.path
+        assert 'TEST' == r._path
 
     def test_with_shell(self):
         r = Runner(self.builder)
-        assert not r.shell
+        assert not r._shell
         res = r.with_shell()
         assert res is r
-        assert r.shell
+        assert r._shell
 
     def test_on_success(self):
         method = Dingus()
         r = Runner(self.builder)
-        assert r.on_success_method is None
+        assert r._on_success is None
         res = r.on_success(method)
         assert res is r
-        assert method is r.on_success_method
+        assert method is r._on_success
         assert 0 == len(method.calls())
 
     def test_on_fail(self):
         method = Dingus()
         r = Runner(self.builder)
-        assert r.on_fail_method is None
+        assert r._on_fail is None
         res = r.on_fail(method)
         assert res is r
-        assert method is r.on_fail_method
+        assert method is r._on_fail
         assert 0 == len(method.calls())
 
     def test_on_finish(self):
         method = Dingus()
         r = Runner(self.builder)
-        assert r.on_finish_method is None
+        assert r._on_finish is None
         res = r.on_finish(method)
         assert res is r
-        assert method is r.on_finish_method
+        assert method is r._on_finish
         assert 0 == len(method.calls())
 
     def test_done(self):
