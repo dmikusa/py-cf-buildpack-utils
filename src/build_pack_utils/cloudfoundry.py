@@ -66,7 +66,7 @@ class CloudFoundryInstaller(object):
         # download based on cfg settings
         fileToInstall = self._dcm.get(fileName, digest)
         if fileToInstall is None:
-            fileToInstall = os.path.join(self._cf.CACHE_DIR, fileName)
+            fileToInstall = os.path.join(self._cf.TEMP_DIR, fileName)
             self._dwn.download(
                 os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % installKey],
                              fileName),
