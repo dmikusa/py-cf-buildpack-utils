@@ -216,7 +216,7 @@ class ScriptCommandBuilder(object):
 
 class EnvironmentVariableBuilder(object):
     def __init__(self, scriptBuilder):
-        self.scriptBuilder = scriptBuilder
+        self._scriptBuilder = scriptBuilder
         self._name = None
         self._export = False
 
@@ -231,7 +231,7 @@ class EnvironmentVariableBuilder(object):
     def value(self, value):
         if not self._name:
             raise ValueError('You must specify a name')
-        builder = self.scriptBuilder.builder
+        builder = self._scriptBuilder.builder
         if hasattr(value, '__call__'):
             value = value()
         elif value in builder.cfg.keys():
@@ -241,8 +241,8 @@ class EnvironmentVariableBuilder(object):
         if self._export:
             line.append('export')
         line.append("%s=%s" % (self._name, value))
-        self.scriptBuilder.manual(' '.join(line))
-        return self.scriptBuilder
+        self._scriptBuilder.manual(' '.join(line))
+        return self._scriptBuilder
 
 
 class Builder(object):
