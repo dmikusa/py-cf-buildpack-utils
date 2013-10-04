@@ -37,6 +37,7 @@ class CloudFoundryUtil(object):
         if os.path.exists(cfgPath):
             with open(cfgPath, 'rt') as cfgFile:
                 return json.load(cfgFile)
+        return {}
 
 
 class CloudFoundryInstaller(object):

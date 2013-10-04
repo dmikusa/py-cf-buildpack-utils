@@ -62,6 +62,12 @@ class TestCloudFoundryUtil(object):
         assert 'y' in cfg['map'].keys()
         assert cfg['map']['z'] == 3
 
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_load_json_config_file_does_not_exist(self):
+        cf = CloudFoundryUtil()
+        cfg = cf.load_json_config_file('does/not/exists.json')
+        assert cfg == {}
+
 
 class TestCloudFoundryInstallerBinaries(object):
     def test_install_binary_cached(self):
