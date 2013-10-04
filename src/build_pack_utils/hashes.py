@@ -12,7 +12,7 @@ class HashUtil(object):
     def calculate_hash(self, checkFile):
         if checkFile is None or checkFile == '':
             return ''
-        hsh = hashlib.new(self._cfg['cache-hash-algorithm'])
+        hsh = hashlib.new(self._cfg['CACHE_HASH_ALGORITHM'])
         with open(checkFile, 'rb') as fileIn:
             for buf in iter(partial(fileIn.read, 8196), ''):
                 hsh.update(buf)
@@ -31,7 +31,7 @@ class ShaHashUtil(HashUtil):
         if checkFile is None or checkFile == '':
             return ''
         proc = Popen(["shasum", "-b",
-                      "-a", self._cfg['cache-hash-algorithm'],
+                      "-a", self._cfg['CACHE_HASH_ALGORITHM'],
                       checkFile], stdout=PIPE, stderr=PIPE)
         output, err = proc.communicate()
         retcode = proc.poll()

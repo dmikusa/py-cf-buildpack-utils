@@ -7,7 +7,7 @@ from hashes import ShaHashUtil
 class BaseCacheManager(object):
 
     def __init__(self, config):
-        if config.get('use-external-hash', False):
+        if config.get('USE_EXTERNAL_HASH', False):
             self._hashUtil = ShaHashUtil(config)
         else:
             self._hashUtil = HashUtil(config)
@@ -29,7 +29,7 @@ class DirectoryCacheManager(BaseCacheManager):
 
     def __init__(self, config):
         BaseCacheManager.__init__(self, config)
-        self._baseDir = config.get('file-cache-base-directory', 
+        self._baseDir = config.get('FILE_CACHE_BASE_DIRECTORY', 
                                    '/tmp/cache')
         if not os.path.exists(self._baseDir):
             os.makedirs(self._baseDir)

@@ -18,7 +18,7 @@ class TestUnzipUtil(object):
 
     def __init__(self):
         self._hshUtil = HashUtil(
-            {'cache-hash-algorithm': 'sha256'})
+            {'CACHE_HASH_ALGORITHM': 'sha256'})
         self._hash = self._hshUtil.calculate_hash(self.HASH_FILE)
 
     def setUp(self):

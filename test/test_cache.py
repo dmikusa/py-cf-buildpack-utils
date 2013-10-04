@@ -10,7 +10,7 @@ class TestDirectoryCacheManager(object):
 
     def __init__(self):
         self._hshUtil = HashUtil(
-            {'cache-hash-algorithm': 'sha256'})
+            {'CACHE_HASH_ALGORITHM': 'sha256'})
 
     def tearDown(self):
         path = os.path.join(tempfile.gettempdir(), 'junk.txt')
@@ -30,9 +30,9 @@ class TestDirectoryCacheManager(object):
     def test_basics(self):
         path = os.path.join(tempfile.gettempdir(), "DCM")
         dcm = DirectoryCacheManager({
-            'file-cache-base-directory': path,
-            'use-external-hash': False,
-            'cache-hash-algorithm': 'sha256'})
+            'FILE_CACHE_BASE_DIRECTORY': path,
+            'USE_EXTERNAL_HASH': False,
+            'CACHE_HASH_ALGORITHM': 'sha256'})
         assert not dcm.exists('asdf', None)
         junk_file = self.create_junk_file('junk.txt')
         key = os.path.basename(junk_file[0])
