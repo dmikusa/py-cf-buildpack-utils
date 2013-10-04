@@ -1,157 +1,458 @@
 import os
+import stat
+import tempfile
 from nose.tools import eq_
+from nose.tools import raises
+from dingus import Dingus
 from build_pack_utils import Runner
-from build_pack_utils import Builder
-from build_pack_utils import CloudFoundryUtil
-from build_pack_utils import api_method
+from build_pack_utils import Configurer
+from build_pack_utils import Installer
+from build_pack_utils import Executor
+from build_pack_utils import StartScriptBuilder
+from build_pack_utils import ScriptCommandBuilder
+from build_pack_utils import EnvironmentVariableBuilder
+
+
+class TestConfigurer(object):
+    def __init__(self):
+        self.cf = Dingus(BUILD_DIR='/tmp/build_dir',
+                         BP_DIR='/tmp/bp_dir')
+        self.builder = Dingus(cf=self.cf)
+        self.cfgur = Configurer(self.builder)
+        self.cfg = Dingus()
+        self.cfgur.builder.cfg = self.cfg
+
+    def test_default_config(self):
+        res = self.cfgur.default_config()
+        assert self.cfg.update.calls().once()
+        assert self.cf.load_json_config_file_from().once()
+        assert 2 == len(self.cf.calls('load_json_config_file_from')[0].args)
+        assert '/tmp/bp_dir' == \
+            self.cf.calls('load_json_config_file_from')[0].args[0]
+        assert 'defaults/options.json' == \
+            self.cf.calls('load_json_config_file_from')[0].args[1]
+        assert res is self.cfgur
+
+    def test_user_config(self):
+        res = self.cfgur.user_config()
+        assert self.cfg.update.calls().once()
+        assert self.cf.load_json_config_file_from().once()
+        assert 2 == len(self.cf.calls('load_json_config_file_from')[0].args)
+        assert '/tmp/build_dir' == \
+            self.cf.calls('load_json_config_file_from')[0].args[0]
+        assert 'config/options.json' == \
+            self.cf.calls('load_json_config_file_from')[0].args[1]
+        assert res is self.cfgur
+
+
+class TestInstaller(object):
+    def __init__(self):
+        self.cf = Dingus(BUILD_DIR='/tmp/build_dir',
+                         BP_DIR='/tmp/bp_dir')
+        self.cfg = Dingus()
+        self.installer = Dingus(__install_binary='/tmp/installed')
+        self.builder = Dingus(cf=self.cf,
+                              cfg=self.cfg,
+                              installer=self.installer)
+        self.inst = Installer(self.builder)
+
+    def test_package(self):
+        res = self.inst.package('TEST')
+        assert self.cfg.calls('__setitem__').once()
+        assert 'TEST_INSTALL_PATH' == \
+            self.cfg.calls('__setitem__')[0].args[0]
+        assert self.installer.install_binary.calls().once()
+        assert 'TEST' == \
+            self.installer.calls('install_binary')[0].args[0]
+        assert self.inst == res
+
+    def test_packages(self):
+        res = self.inst.packages('TEST1', 'TEST2')
+        assert 2 == len(self.cfg.calls('__setitem__'))
+        assert 'TEST1_INSTALL_PATH' == \
+            self.cfg.calls('__setitem__')[0].args[0]
+        assert 'TEST2_INSTALL_PATH' == \
+            self.cfg.calls('__setitem__')[1].args[0]
+        assert 2 == len(self.installer.install_binary.calls())
+        assert 'TEST1' == \
+            self.installer.calls('install_binary')[0].args[0]
+        assert 'TEST2' == \
+            self.installer.calls('install_binary')[1].args[0]
+        assert self.inst == res
+
+    def test_done(self):
+        res = self.inst.done()
+        assert self.builder == res
+
+
+class TestExecutor(object):
+    def test_method(self):
+        method = Dingus()
+        builder = Dingus()
+        ex = Executor(builder)
+        res = ex.method(method)
+        assert res is builder
+        assert method.calls().once()
 
 
 class TestRunner(object):
-    # these tests will fai on Windows, requires "ls" command
-
-    def test_run_from_directory(self):
-        cwd = os.getcwd()
-        (retcode, stdout, stderr) = \
-            Runner.run_from_directory(
-                './test/data/', 'ls', ['-la'], shell=True)
-        eq_(stderr, '')
-        eq_(stdout, 'HASH\nHASH.bz2\nHASH.gz\nHASH.tar\nHASH.tar.bz2\n'
-                    'HASH.tar.gz\nHASH.zip\nconfig.json\noptions.json\n')
-        eq_(retcode, 0)
-        eq_(cwd, os.getcwd())
-
-    def test_run_from_directory_error(self):
-        cwd = os.getcwd()
-        (retcode, stdout, stderr) = \
-            Runner.run_from_directory(
-                './test/data/', 'ls', ['-la', '/doesnt/exist'], shell=False)
-        eq_(stderr, 'ls: /doesnt/exist: No such file or directory\n')
-        eq_(stdout, '')
-        eq_(retcode, 1)
-        eq_(cwd, os.getcwd())
-
-    def test_run_from_directory_that_doesnt_exist(self):
-        assert None is \
-            Runner.run_from_directory(
-                '/doesnt/exist', 'ls', ['-la'], shell=False)
-        assert None is \
-            Runner.run_from_directory(
-                '/doesnt/exist', 'ls', ['-la'], shell=True)
-
-
-class TestBuilderMerge(object):
     def __init__(self):
-        # Do this to skip the constructor, not needed
-        self.bpw = object.__new__(Builder)
+        self.builder = Dingus(cfg={'KEY': 'TEST'})
 
-    def test_merge_one_dict(self):
-        res = self.bpw.merge({1: '123', 2: '456'})
-        assert len(res) == 2
-        assert 1 in res.keys()
-        assert 2 in res.keys()
-        assert '123' == res[1]
-        assert '456' == res[2]
+    def test_command_string(self):
+        r = Runner(self.builder)
+        res = r.command('TEST')
+        assert res is r
+        assert ['TEST'] == r.cmd
 
-    def test_merge_two_dicts(self):
-        res = self.bpw.merge({1: '123', 2: '456'},
-                             {3: '789', 4: '0123'})
-        assert len(res) == 4
-        assert 1 in res.keys()
-        assert 2 in res.keys()
-        assert 3 in res.keys()
-        assert 4 in res.keys()
-        assert '123' == res[1]
-        assert '456' == res[2]
-        assert '789' == res[3]
-        assert '0123' == res[4]
+    def test_command_method(self):
+        method = Dingus(return_value=['TEST'])
+        r = Runner(self.builder)
+        res = r.command(method)
+        assert res is r
+        assert ['TEST'] == r.cmd
+        assert method.calls().once()
 
-    def test_merge_three_dict(self):
-        res = self.bpw.merge({1: '123', 2: '456'},
-                             {3: '789', 4: '0123'},
-                             {5: '4567', 6: '8901'})
-        assert len(res) == 6
-        assert 1 in res.keys()
-        assert 2 in res.keys()
-        assert 3 in res.keys()
-        assert 4 in res.keys()
-        assert 5 in res.keys()
-        assert 6 in res.keys()
-        assert '123' == res[1]
-        assert '456' == res[2]
-        assert '789' == res[3]
-        assert '0123' == res[4]
-        assert '4567' == res[5]
-        assert '8901' == res[6]
+    def test_command_list(self):
+        r = Runner(self.builder)
+        res = r.command(['TEST'])
+        assert res is r
+        assert ['TEST'] == r.cmd
 
-    def test_merge_two_dicts_with_overlap(self):
-        res = self.bpw.merge({1: '123', 2: '456'},
-                             {2: '789', 3: '0123'})
-        assert len(res) == 3
-        assert 1 in res.keys()
-        assert 2 in res.keys()
-        assert 3 in res.keys()
-        assert '123' == res[1]
-        assert '789' == res[2]
-        assert '0123' == res[3]
+    def test_out_of_string(self):
+        r = Runner(self.builder)
+        res = r.out_of('TEST')
+        assert res is r
+        assert 'TEST' == r.path
+
+    def test_out_of_method(self):
+        method = Dingus(return_value='TEST')
+        r = Runner(self.builder)
+        res = r.out_of(method)
+        assert res is r
+        assert 'TEST' == r.path
+
+    def test_out_of_key(self):
+        r = Runner(self.builder)
+        res = r.out_of('KEY')
+        assert res is r
+        assert 'TEST' == r.path
+
+    def test_with_shell(self):
+        r = Runner(self.builder)
+        assert not r.shell
+        res = r.with_shell()
+        assert res is r
+        assert r.shell
+
+    def test_on_success(self):
+        method = Dingus()
+        r = Runner(self.builder)
+        assert r.on_success_method is None
+        res = r.on_success(method)
+        assert res is r
+        assert method is r.on_success_method
+        assert 0 == len(method.calls())
+
+    def test_on_fail(self):
+        method = Dingus()
+        r = Runner(self.builder)
+        assert r.on_fail_method is None
+        res = r.on_fail(method)
+        assert res is r
+        assert method is r.on_fail_method
+        assert 0 == len(method.calls())
+
+    def test_on_finish(self):
+        method = Dingus()
+        r = Runner(self.builder)
+        assert r.on_finish_method is None
+        res = r.on_finish(method)
+        assert res is r
+        assert method is r.on_finish_method
+        assert 0 == len(method.calls())
+
+    def test_done(self):
+        on_success = Dingus()
+        r = Runner(self.builder)
+        r.command('ls -la')
+        r.out_of('./test/data')
+        r.on_success(on_success)
+        res = r.done()
+        assert res is self.builder
+        assert on_success.calls().once()
+        assert 3 == len(on_success.calls()[0].args)
+        cmd = on_success.calls()[0].args[0]
+        assert 2 == len(cmd)
+        assert 'ls' == cmd[0]
+        assert '-la' == cmd[1]
+        assert 0 == on_success.calls()[0].args[1]
+        assert on_success.calls()[0].args[2].find('HASH.tar.bz2') >= 0
+
+    def test_done_fail(self):
+        on_fail = Dingus()
+        r = Runner(self.builder)
+        r.command('ls -la /does/not/exist')
+        r.on_fail(on_fail)
+        res = r.done()
+        assert res is self.builder
+        assert on_fail.calls().once()
+        assert 3 == len(on_fail.calls()[0].args)
+        cmd = on_fail.calls()[0].args[0]
+        assert 3 == len(cmd)
+        assert 'ls' == cmd[0]
+        assert '-la' == cmd[1]
+        assert '/does/not/exist' == cmd[2]
+        assert 1 == on_fail.calls()[0].args[1]
+        assert on_fail.calls()[0].args[2].find(
+            'No such file or directory') >= 0
+
+    def test_done_finish(self):
+        on_finish = Dingus()
+        r = Runner(self.builder)
+        r.command('ls -la /does/not/exist')
+        r.on_finish(on_finish)
+        res = r.done()
+        assert res is self.builder
+        assert on_finish.calls().once()
+        assert 4 == len(on_finish.calls()[0].args)
+        cmd = on_finish.calls()[0].args[0]
+        assert 3 == len(cmd)
+        assert 'ls' == cmd[0]
+        assert '-la' == cmd[1]
+        assert '/does/not/exist' == cmd[2]
+        assert 1 == on_finish.calls()[0].args[1]
+        assert '' == on_finish.calls()[0].args[2]
+        assert on_finish.calls()[0].args[3].find(
+            'No such file or directory') >= 0
 
 
-class TestBuilderConfig(object):
+class TestStartScriptBuilder(object):
     def __init__(self):
-        # Do this to skip the constructor, not needed
-        self.bpw = object.__new__(Builder)
-        self.bpw.cf = object.__new__(CloudFoundryUtil)
+        self.cf = Dingus(BUILD_DIR=tempfile.gettempdir())
+        self.builder = Dingus(cf=self.cf)
 
-    def test_user_config_default(self):
-        self.bpw.cf.BUILD_DIR = './test/data/'
-        self.bpw.cfg = {}
-        res = self.bpw.user_config()
-        assert len(res) == 4
-        assert "int" in res.keys()
-        assert res['int'] == 5
+    def test_write(self):
+        b = StartScriptBuilder(self.builder)
+        b.manual('ls -la')
+        b.manual('echo Hello World')
+        b.manual('X=1234')
+        try:
+            b.write()
+            expectedFile = os.path.join(tempfile.gettempdir(),
+                                        'start.sh')
+            assert os.path.exists(expectedFile)
+            eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
+            data = open(expectedFile, 'rt').read()
+            assert data.find('ls -la') >= 0
+            assert data.find('echo') >= 0
+            assert data.find('1234') >= 0
+        finally:
+            if expectedFile and os.path.exists(expectedFile):
+                os.remove(expectedFile)
 
-    def test_user_config_manual(self):
-        self.bpw.cfg = {
-            'DEFAULT_USER_CONFIG_PATH': 'options.json'
-        }
-        self.bpw.cf.BUILD_DIR = './test/data/'
-        res = self.bpw.user_config()
-        assert len(res) == 4
-        assert "int" in res.keys()
-        assert res['int'] == 3
+    def test_fancy_1(self):
+        ssb = (StartScriptBuilder(self.builder)
+                   .environment_variable()
+                       .export()
+                       .name('TEST')
+                       .value('1234')
+                   .environment_variable()
+                       .name('JUNK')
+                       .value('4321')
+                   .command()
+                       .manual('ls -lath')
+                       .done()
+                   .command()
+                       .run('ps')
+                       .with_argument('aux')
+                       .pipe()
+                           .run('grep')
+                           .with_argument('catalina')
+                           .done()
+                       .done()
+                   .command()
+                       .run('start.sh')
+                       .background()
+                       .done())
+        assert hasattr(ssb, 'write')
+        eq_('export TEST=1234', ssb.content[0])
+        eq_('JUNK=4321', ssb.content[1])
+        eq_('ls -lath', ssb.content[2])
+        eq_('ps aux | grep catalina', ssb.content[3])
+        eq_('start.sh &', ssb.content[4])
 
-    def test_bp_config_default(self):
-        self.bpw.cf.BP_DIR = './test/data/'
-        self.bpw.cfg = {}
-        res = self.bpw.default_config()
-        assert len(res) == 4
-        assert "int" in res.keys()
-        assert res['int'] == 3
 
-    def test_bp_config_manual(self):
-        self.bpw.cfg = {
-            'DEFAULT_CONFIG_PATH': 'config.json'
-        }
-        self.bpw.cf.BP_DIR = './test/data/'
-        res = self.bpw.default_config()
-        assert len(res) == 4
-        assert "int" in res.keys()
-        assert res['int'] == 5
+class TestScriptCommandBuilder(object):
+    def __init__(self):
+        self.ssb = Dingus()
 
-    def test_use_config(self):
-        self.bpw.cfg = None
-        self.bpw.use({'x': '1234'})
-        assert self.bpw.cfg is not None
-        assert 'x' in self.bpw.cfg.keys()
-        assert '1234' == self.bpw.cfg['x']
-        instId = id(self.bpw.installer)
-        self.bpw.use({'y': '4321'})
-        assert 'y' in self.bpw.cfg.keys()
-        assert '4321' == self.bpw.cfg['y']
-        assert instId != id(self.bpw.installer)
+    def test_manual(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        res = scb.manual('ls -la')
+        assert res is scb
+        assert len(scb.content) == 1
+        assert 'ls -la' == scb.content[0]
 
-#
-# Builder().
-#    use().
-#        .default_config()
-#        .user_config('path')
-#
+    def test_run(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        res = scb.run('ls')
+        assert res is scb
+        assert 'ls' == scb.command
+
+    def test_with_argument(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        res = scb.with_argument('-la')
+        assert res is scb
+        assert 1 == len(scb.args)
+        assert '-la' == scb.args[0]
+
+    def test_background(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        assert not scb.bg
+        res = scb.background()
+        assert res is scb
+        assert scb.bg
+
+    def test_redirect(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        res = scb.redirect(stderr=1, stdout=2, both=3)
+        assert res is scb
+        assert 1 == scb.redirect_stderr
+        assert 2 == scb.redirect_stdout
+        assert 3 == scb.redirect_both
+
+    def test_pipe(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.background()
+        assert scb.bg
+        res = scb.pipe()
+        assert res is not scb
+        assert not scb.bg
+
+    def test_done_simple(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.run('ls')
+        scb.with_argument('-la')
+        scb.with_argument('/some/path')
+        res = scb.done()
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        assert 'ls -la /some/path' == self.ssb.calls()[0].args[0]
+
+    def test_done_redirect_stderr(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.run('ls')
+        scb.with_argument('-la')
+        scb.redirect(stderr='/dev/null')
+        res = scb.done()
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        assert 'ls -la 2> /dev/null' == self.ssb.calls()[0].args[0]
+
+    def test_done_redirect_stdout(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.run('ls')
+        scb.with_argument('-la')
+        scb.redirect(stdout='/dev/null')
+        res = scb.done()
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        assert 'ls -la > /dev/null' == self.ssb.calls()[0].args[0]
+
+    def test_done_redirect_both(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.run('ls')
+        scb.with_argument('-la')
+        scb.redirect(both='/dev/null')
+        res = scb.done()
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        assert 'ls -la &> /dev/null' == self.ssb.calls()[0].args[0]
+
+    def test_done_background(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.run('ls')
+        scb.with_argument('-la')
+        scb.background()
+        res = scb.done()
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        assert 'ls -la &' == self.ssb.calls()[0].args[0]
+
+    def test_done_pipe(self):
+        scb = ScriptCommandBuilder(self.ssb)
+        scb.run('ps')
+        scb.with_argument('aux')
+        subCmd = scb.pipe()
+        subCmd.run('grep')
+        subCmd.with_argument('catalina')
+        subCmd.done()
+        res = scb.done()
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        eq_('ps aux | grep catalina', self.ssb.calls()[0].args[0])
+
+    def test_done_fancy(self):
+        res = (ScriptCommandBuilder(self.ssb)
+                   .run('ps')
+                   .with_argument('aux')
+                   .pipe()
+                       .run('grep')
+                       .with_argument('catalina')
+                       .background()
+                       .done()
+                   .done())
+        assert res is self.ssb
+        assert self.ssb.manual.calls().once()
+        eq_('ps aux | grep catalina &', self.ssb.calls()[0].args[0])
+
+
+class TestEnvironmentVariableBuilder(object):
+    def __init__(self):
+        self.cf = Dingus(BUILD_DIR='/tmp/build_dir')
+        self.builder = Dingus(cf=self.cf,
+                              cfg={'VAL': '1234'})
+        self.ssb = Dingus(builder=self.builder)
+
+    def test_export(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        assert not evb._export
+        res = evb.export()
+        assert res is evb
+        assert evb._export
+
+    def test_name(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        res = evb.name('TEST')
+        assert res is evb
+        assert 'TEST' == evb._name
+
+    @raises(ValueError)
+    def test_value_no_name(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        evb.value('1234')
+
+    def test_value_method(self):
+        method = Dingus(return_value='1234')
+        evb = EnvironmentVariableBuilder(self.ssb)
+        evb.name('TEST')
+        res = evb.value(method)
+        assert res is self.ssb
+        assert method.calls().once()
+        assert 0 == len(method.calls()[0].args)
+        eq_('TEST=1234', self.ssb.calls()[0].args[0])
+
+    def test_value_string(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        evb.name('TEST')
+        res = evb.value('1234')
+        assert res is self.ssb
+        eq_('TEST=1234', self.ssb.calls()[0].args[0])
+
+    def test_value_config(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        evb.name('TEST')
+        res = evb.value('VAL')
+        assert res is self.ssb
+        eq_('TEST=1234', self.ssb.calls()[0].args[0])
