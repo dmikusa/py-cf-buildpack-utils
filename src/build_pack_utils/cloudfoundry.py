@@ -72,7 +72,7 @@ class CloudFoundryInstaller(object):
                              fileName),
                 fileToInstall)
             digest = self._hashUtil.calculate_hash(fileToInstall)
-            self._dcm.put(fileName, fileToInstall, digest)
+            fileToInstall = self._dcm.put(fileName, fileToInstall, digest)
         # unzip
         # install to cfg determined location 'PACKAGE_INSTALL_DIR'
         #  into or CF's BUILD_DIR
