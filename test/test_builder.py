@@ -291,44 +291,44 @@ class TestScriptCommandBuilder(object):
         scb = ScriptCommandBuilder(self.ssb)
         res = scb.manual('ls -la')
         assert res is scb
-        assert len(scb.content) == 1
-        assert 'ls -la' == scb.content[0]
+        assert len(scb._content) == 1
+        assert 'ls -la' == scb._content[0]
 
     def test_run(self):
         scb = ScriptCommandBuilder(self.ssb)
         res = scb.run('ls')
         assert res is scb
-        assert 'ls' == scb.command
+        assert 'ls' == scb._command
 
     def test_with_argument(self):
         scb = ScriptCommandBuilder(self.ssb)
         res = scb.with_argument('-la')
         assert res is scb
-        assert 1 == len(scb.args)
-        assert '-la' == scb.args[0]
+        assert 1 == len(scb._args)
+        assert '-la' == scb._args[0]
 
     def test_background(self):
         scb = ScriptCommandBuilder(self.ssb)
-        assert not scb.bg
+        assert not scb._background
         res = scb.background()
         assert res is scb
-        assert scb.bg
+        assert scb._background
 
     def test_redirect(self):
         scb = ScriptCommandBuilder(self.ssb)
         res = scb.redirect(stderr=1, stdout=2, both=3)
         assert res is scb
-        assert 1 == scb.redirect_stderr
-        assert 2 == scb.redirect_stdout
-        assert 3 == scb.redirect_both
+        assert 1 == scb._stderr
+        assert 2 == scb._stdout
+        assert 3 == scb._both
 
     def test_pipe(self):
         scb = ScriptCommandBuilder(self.ssb)
         scb.background()
-        assert scb.bg
+        assert scb._background
         res = scb.pipe()
         assert res is not scb
-        assert not scb.bg
+        assert not scb._background
 
     def test_done_simple(self):
         scb = ScriptCommandBuilder(self.ssb)

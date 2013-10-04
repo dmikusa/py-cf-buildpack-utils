@@ -157,61 +157,61 @@ class StartScriptBuilder(object):
 
 class ScriptCommandBuilder(object):
     def __init__(self, scriptBuilder):
-        self.scriptBuilder = scriptBuilder
-        self.command = None
-        self.args = []
-        self.bg = False
-        self.redirect_stdout = None
-        self.redirect_stderr = None
-        self.redirect_both = None
-        self.content = []
+        self._scriptBuilder = scriptBuilder
+        self._command = None
+        self._args = []
+        self._background = False
+        self._stdout = None
+        self._stderr = None
+        self._both = None
+        self._content = []
 
     def manual(self, cmd):
-        self.content.append(cmd)
+        self._content.append(cmd)
         return self
 
     def run(self, command):
-        self.command = command
+        self._command = command
         return self
 
     def with_argument(self, argument):
-        self.args.append(argument)
+        self._args.append(argument)
         return self
 
     def background(self):
-        self.bg = True
+        self._background = True
         return self
 
     def redirect(self, stderr=None, stdout=None, both=None):
-        self.redirect_stderr = stderr
-        self.redirect_stdout = stdout
-        self.redirect_both = both
+        self._stderr = stderr
+        self._stdout = stdout
+        self._both = both
         return self
 
     def pipe(self):
         # background should be on last command only
-        self.bg = False
+        self._background = False
         return ScriptCommandBuilder(self)
 
     def done(self):
         cmd = []
-        if self.command:
-            cmd.append(self.command)
-            cmd.extend(self.args)
-            if self.redirect_both:
-                cmd.append('&> %s' % self.redirect_both)
-            elif self.redirect_stdout:
-                cmd.append('> %s' % self.redirect_stdout)
-            elif self.redirect_stderr:
-                cmd.append('2> %s' % self.redirect_stderr)
-            if self.bg:
+        if self._command:
+            cmd.append(self._command)
+            cmd.extend(self._args)
+            if self._both:
+                cmd.append('&> %s' % self._both)
+            elif self._stdout:
+                cmd.append('> %s' % self._stdout)
+            elif self._stderr:
+                cmd.append('2> %s' % self._stderr)
+            if self._background:
                 cmd.append('&')
-        if self.content:
-            if self.command:
+        if self._content:
+            if self._command:
                 cmd.append('|')
-            cmd.append(' '.join(self.content))
-        self.scriptBuilder.manual(' '.join(cmd))
-        return self.scriptBuilder
+            cmd.append(' '.join(self._content))
+        self._scriptBuilder.manual(' '.join(cmd))
+        return self._scriptBuilder
 
 
 class EnvironmentVariableBuilder(object):
