@@ -147,8 +147,10 @@ class StartScriptBuilder(object):
         return ScriptCommandBuilder(self)
 
     def write(self):
+        scriptName = self.builder.cfg.get('START_SCRIPT_NAME',
+                                          'start.sh')
         startScriptPath = os.path.join(
-            self.builder.cf.BUILD_DIR, 'start.sh')
+            self.builder.cf.BUILD_DIR, scriptName)
         with open(startScriptPath, 'wt') as out:
             out.write('\n'.join(self.content))
         os.chmod(startScriptPath, 0755)
