@@ -12,6 +12,7 @@ class UnzipUtil(object):
         self._cfg = config
 
     def _unzip(self, zipFile, intoDir):
+        zipIn = None
         try:
             zipIn = zipfile.ZipFile(zipFile, 'r')
             zipIn.extractall(intoDir)
@@ -21,6 +22,7 @@ class UnzipUtil(object):
         return intoDir
 
     def _untar(self, zipFile, intoDir):
+        tarIn = None
         try:
             tarIn = tarfile.open(zipFile, 'r:')
             tarIn.extractall(intoDir)
@@ -31,6 +33,7 @@ class UnzipUtil(object):
 
     def _gunzip(self, zipFile, intoDir):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-3])
+        zipIn = None
         try:
             zipIn = gzip.open(zipFile, 'rb')
             with open(path, 'wb') as zipOut:
@@ -43,6 +46,7 @@ class UnzipUtil(object):
 
     def _bunzip2(self, zipFile, intoDir):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-4])
+        zipIn = None
         try:
             zipIn = bz2.BZ2File(zipFile, 'rb')
             with open(path, 'wb') as zipOut:
@@ -54,6 +58,7 @@ class UnzipUtil(object):
         return path
 
     def _tar_gunzip(self, zipFile, intoDir):
+        tarIn = None
         try:
             tarIn = tarfile.open(zipFile, 'r:gz')
             tarIn.extractall(intoDir)
@@ -63,6 +68,7 @@ class UnzipUtil(object):
         return intoDir
 
     def _tar_bunzip2(self, zipFile, intoDir):
+        tarIn = None
         try:
             tarIn = tarfile.open(zipFile, 'r:bz2')
             tarIn.extractall(intoDir)
