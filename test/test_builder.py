@@ -230,13 +230,15 @@ class TestRunner(object):
 class TestStartScriptBuilder(object):
     def __init__(self):
         self.cf = Dingus(BUILD_DIR=tempfile.gettempdir())
-        self.builder = Dingus(cf=self.cf)
+        self.builder = Dingus(cf=self.cf,
+                              cfg={})
 
     def test_write(self):
         b = StartScriptBuilder(self.builder)
         b.manual('ls -la')
         b.manual('echo Hello World')
         b.manual('X=1234')
+        expectedFile = None
         try:
             b.write()
             expectedFile = os.path.join(tempfile.gettempdir(),
