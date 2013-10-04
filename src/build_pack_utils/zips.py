@@ -4,6 +4,8 @@ import bz2
 import tarfile
 import zipfile
 from functools import partial
+from subprocess import Popen
+from subprocess import PIPE
 
 
 class UnzipUtil(object):
@@ -11,7 +13,7 @@ class UnzipUtil(object):
     def __init__(self, config):
         self._cfg = config
 
-    def _unzip(self, zipFile, intoDir):
+    def _unzip(self, zipFile, intoDir, stripLevel):
         zipIn = None
         try:
             zipIn = zipfile.ZipFile(zipFile, 'r')
@@ -21,7 +23,7 @@ class UnzipUtil(object):
                 zipIn.close()
         return intoDir
 
-    def _untar(self, zipFile, intoDir):
+    def _untar(self, zipFile, intoDir, stripLevel):
         tarIn = None
         try:
             tarIn = tarfile.open(zipFile, 'r:')
@@ -31,7 +33,7 @@ class UnzipUtil(object):
                 tarIn.close()
         return intoDir
 
-    def _gunzip(self, zipFile, intoDir):
+    def _gunzip(self, zipFile, intoDir, stripLevel):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-3])
         zipIn = None
         try:
@@ -44,7 +46,7 @@ class UnzipUtil(object):
                 zipIn.close()
         return path
 
-    def _bunzip2(self, zipFile, intoDir):
+    def _bunzip2(self, zipFile, intoDir, stripLevel):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-4])
         zipIn = None
         try:
@@ -57,24 +59,40 @@ class UnzipUtil(object):
                 zipIn.close()
         return path
 
-    def _tar_gunzip(self, zipFile, intoDir):
-        tarIn = None
-        try:
-            tarIn = tarfile.open(zipFile, 'r:gz')
-            tarIn.extractall(intoDir)
-        finally:
-            if tarIn:
-                tarIn.close()
-        return intoDir
+    def _tar_bunzip2(self, zipFile, intoDir, stripLevel):
+        return self._tar_helper(zipFile, intoDir, 'bz2', stripLevel)
+    
+    def _tar_gunzip(self, zipFile, intoDir, stripLevel):
+        return self._tar_helper(zipFile, intoDir, 'gz', stripLevel)
 
-    def _tar_bunzip2(self, zipFile, intoDir):
-        tarIn = None
+    def _tar_helper(self, zipFile, intoDir, compression, stripLevel):
+        # build command
+        cmd = []
+        if compression == 'gz':
+            cmd.append('gunzip -c %s' % zipFile)
+        elif compression == 'bz2':
+            cmd.append('bunzip2 -c %s' % zipFile)
+        else:
+            raise ValueError('Invalid compression [%s]' % compression)
+        if stripLevel > 0:
+            cmd.append('tar xf --strip-components %d' % striplevel)
+        else:
+            cmd.append('tar xf -')
+        # run it
+        cwd = os.getcwd()
         try:
-            tarIn = tarfile.open(zipFile, 'r:bz2')
-            tarIn.extractall(intoDir)
+            if not os.path.exists(intoDir):
+                os.makedirs(intoDir)
+            os.chdir(intoDir)
+            if os.path.exists(zipFile):
+                proc = Popen(' | '.join(cmd), stdout=PIPE, shell=True)
+                output, unused_err = proc.communicate()
+                retcode = proc.poll()
+                if retcode:
+                    raise RuntimeError("Extracting [%s] failed with code [%d]" 
+                                       % (zipFile, retcode))
         finally:
-            if tarIn:
-                tarIn.close()
+            os.chdir(cwd)
         return intoDir
 
     def _pick_based_on_file_extension(self, zipFile):
@@ -91,7 +109,7 @@ class UnzipUtil(object):
         if zipFile.endswith('.zip') and zipfile.is_zipfile(zipFile):
             return self._unzip
 
-    def extract(self, zipFile, intoDir, method=None):
+    def extract(self, zipFile, intoDir, stripLevel=0, method=None):
         if not method:
             method = self._pick_based_on_file_extension(zipFile)
-        return method(zipFile, intoDir)
+        return method(zipFile, intoDir, stripLevel)
