@@ -14,20 +14,20 @@ class CloudFoundryUtil(object):
         # Open stdout unbuffered
         if hasattr(sys.stdout, 'fileno'):
             sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
-        # User's Application Files, build droplet here
-        self.BUILD_DIR = (len(sys.argv) >= 2) and sys.argv[1] or None
-        # Cache space for the build pack
-        self.CACHE_DIR = (len(sys.argv) >= 3) and sys.argv[2] or None
-        # Temp space
-        self.TEMP_DIR = os.environ.get('TMPDIR', tempfile.gettempdir())
         # Build Pack Location
         self.BP_DIR = os.path.dirname(os.path.dirname(sys.argv[0]))
+        # User's Application Files, build droplet here
+        self.BUILD_DIR = sys.argv[1]
+        # Cache space for the build pack
+        self.CACHE_DIR = (len(sys.argv) == 3) and sys.argv[2] or None
+        # Temp space
+        self.TEMP_DIR = os.environ.get('TMPDIR', tempfile.gettempdir())
         # Memory Limit
         self.MEMORY_LIMIT = os.environ.get('MEMORY_LIMIT', None)
         # Make sure cache & build directories exist
         if not os.path.exists(self.BUILD_DIR):
             os.makedirs(self.BUILD_DIR)
-        if not os.path.exists(self.CACHE_DIR):
+        if self.CACHE_DIR and not os.path.exists(self.CACHE_DIR):
             os.makedirs(self.CACHE_DIR)
 
     def load_json_config_file_from(self, folder, cfgFile):
