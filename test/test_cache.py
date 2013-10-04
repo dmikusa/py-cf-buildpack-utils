@@ -36,7 +36,8 @@ class TestDirectoryCacheManager(object):
         assert not dcm.exists('asdf', None)
         junk_file = self.create_junk_file('junk.txt')
         key = os.path.basename(junk_file[0])
-        dcm.put(key, junk_file[0], junk_file[1])
+        cachePath = dcm.put(key, junk_file[0], junk_file[1])
+        assert os.path.join(path, key) == cachePath
         assert dcm.exists(key, junk_file[1])
         assert dcm.get(key, junk_file[1]).endswith('DCM/junk.txt')
         dcm.delete(key)

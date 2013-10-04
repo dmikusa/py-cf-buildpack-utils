@@ -47,6 +47,7 @@ class DirectoryCacheManager(BaseCacheManager):
                   "does not match.  Will update the cache if the " \
                   "underlying file system supports it."
         shutil.copy(fileToCache, path)
+        return path
 
     def delete(self, key):
         path = os.path.join(self._baseDir, key)
