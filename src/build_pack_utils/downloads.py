@@ -12,8 +12,7 @@ class Downloader(object):
         res = urllib2.urlopen(url)
         with open(toFile, 'w') as f:
             f.write(res.read())
-        if self._cfg.get('verbose', False):
-            print 'Downloaded [%s] to [%s]' % (url, toFile)
+        print 'Downloaded [%s] to [%s]' % (url, toFile)
 
 
 class CurlDownloader(object):
@@ -32,3 +31,4 @@ class CurlDownloader(object):
                 (output.startswith('4') or
                  output.startswith('5')):
             raise RuntimeError("curl says [%s]" % output)
+        print 'Downloaded [%s] to [%s]' % (url, toFile)
