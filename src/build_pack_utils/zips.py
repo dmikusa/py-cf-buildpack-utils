@@ -1,8 +1,9 @@
 import os
 import gzip
 import bz2
-import tarfile
 import zipfile
+import tempfile
+import shutil
 from functools import partial
 from subprocess import Popen
 from subprocess import PIPE
@@ -13,27 +14,27 @@ class UnzipUtil(object):
     def __init__(self, config):
         self._cfg = config
 
-    def _unzip(self, zipFile, intoDir, stripLevel):
+    def _unzip(self, zipFile, intoDir, strip):
+        tmpDir = (strip) and tempfile.gettempdir() or intoDir
         zipIn = None
         try:
             zipIn = zipfile.ZipFile(zipFile, 'r')
-            zipIn.extractall(intoDir)
+            zipIn.extractall(tmpDir)
+            if strip:
+                members = zipIn.namelist()
+                if len(members) > 0:
+                    firstDir = members[0].split('/')[0]
+                    moveFrom = os.path.join(tmpDir, firstDir)
+                    if os.path.exists(moveFrom):
+                        for item in os.listdir(moveFrom):
+                            shutil.move(os.path.join(moveFrom, item),
+                                        intoDir)
         finally:
             if zipIn:
                 zipIn.close()
         return intoDir
 
-    def _untar(self, zipFile, intoDir, stripLevel):
-        tarIn = None
-        try:
-            tarIn = tarfile.open(zipFile, 'r:')
-            tarIn.extractall(intoDir)
-        finally:
-            if tarIn:
-                tarIn.close()
-        return intoDir
-
-    def _gunzip(self, zipFile, intoDir, stripLevel):
+    def _gunzip(self, zipFile, intoDir, strip):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-3])
         zipIn = None
         try:
@@ -46,7 +47,7 @@ class UnzipUtil(object):
                 zipIn.close()
         return path
 
-    def _bunzip2(self, zipFile, intoDir, stripLevel):
+    def _bunzip2(self, zipFile, intoDir, strip):
         path = os.path.join(intoDir, os.path.basename(zipFile)[:-4])
         zipIn = None
         try:
@@ -59,25 +60,34 @@ class UnzipUtil(object):
                 zipIn.close()
         return path
 
-    def _tar_bunzip2(self, zipFile, intoDir, stripLevel):
-        return self._tar_helper(zipFile, intoDir, 'bz2', stripLevel)
-    
-    def _tar_gunzip(self, zipFile, intoDir, stripLevel):
-        return self._tar_helper(zipFile, intoDir, 'gz', stripLevel)
+    def _tar_bunzip2(self, zipFile, intoDir, strip):
+        return self._tar_helper(zipFile, intoDir, 'bz2', strip)
 
-    def _tar_helper(self, zipFile, intoDir, compression, stripLevel):
+    def _tar_gunzip(self, zipFile, intoDir, strip):
+        return self._tar_helper(zipFile, intoDir, 'gz', strip)
+
+    def _untar(self, zipFile, intoDir, strip):
+        return self._tar_helper(zipFile, intoDir, None, strip)
+
+    def _tar_helper(self, zipFile, intoDir, compression, strip):
         # build command
         cmd = []
         if compression == 'gz':
             cmd.append('gunzip -c %s' % zipFile)
         elif compression == 'bz2':
             cmd.append('bunzip2 -c %s' % zipFile)
+        if strip > 0:
+            if compression is None:
+                cmd.append('tar xf --strip-components %d %s'
+                           % (strip, zipFile))
+            else:
+                cmd.append('tar xf --strip-components %d -' % strip)
         else:
-            raise ValueError('Invalid compression [%s]' % compression)
-        if stripLevel > 0:
-            cmd.append('tar xf --strip-components %d' % striplevel)
-        else:
-            cmd.append('tar xf -')
+            if compression is None:
+                cmd.append('tar xf %s' % zipFile)
+            else:
+                cmd.append('tar xf -')
+        command = (len(cmd) > 1) and ' | '.join(cmd) or ''.join(cmd)
         # run it
         cwd = os.getcwd()
         try:
@@ -85,11 +95,11 @@ class UnzipUtil(object):
                 os.makedirs(intoDir)
             os.chdir(intoDir)
             if os.path.exists(zipFile):
-                proc = Popen(' | '.join(cmd), stdout=PIPE, shell=True)
+                proc = Popen(command, stdout=PIPE, shell=True)
                 output, unused_err = proc.communicate()
                 retcode = proc.poll()
                 if retcode:
-                    raise RuntimeError("Extracting [%s] failed with code [%d]" 
+                    raise RuntimeError("Extracting [%s] failed with code [%d]"
                                        % (zipFile, retcode))
         finally:
             os.chdir(cwd)
@@ -109,7 +119,7 @@ class UnzipUtil(object):
         if zipFile.endswith('.zip') and zipfile.is_zipfile(zipFile):
             return self._unzip
 
-    def extract(self, zipFile, intoDir, stripLevel=0, method=None):
+    def extract(self, zipFile, intoDir, strip=False, method=None):
         if not method:
             method = self._pick_based_on_file_extension(zipFile)
-        return method(zipFile, intoDir, stripLevel)
+        return method(zipFile, intoDir, strip)

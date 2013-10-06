@@ -22,6 +22,7 @@ class CloudFoundryUtil(object):
         self.CACHE_DIR = (len(sys.argv) == 3) and sys.argv[2] or None
         # Temp space
         self.TEMP_DIR = os.environ.get('TMPDIR', tempfile.gettempdir())
+        tempfile.tempdir = self.TEMP_DIR
         # Memory Limit
         self.MEMORY_LIMIT = os.environ.get('MEMORY_LIMIT', None)
         # Make sure cache & build directories exist
@@ -77,13 +78,11 @@ class CloudFoundryInstaller(object):
         # install to cfg determined location 'PACKAGE_INSTALL_DIR'
         #  into or CF's BUILD_DIR
         pkgKey = '%s_PACKAGE_INSTALL_DIR' % installKey
-        if pkgKey in self._cfg.keys():
-            installIntoDir = os.path.join(self._cfg[pkgKey],
-                                          fileName.split('.')[0])
-        else:
-            installIntoDir = os.path.join(self._cf.BUILD_DIR,
-                                          fileName.split('.')[0])
-        self._unzipUtil.extract(fileToInstall, installIntoDir)
+        stripLevelKey = '%s_STRIP_LEVEL' % installKey
+        installIntoDir = self._cfg.get(pkgKey, self._cf.BUILD_DIR)
+        self._unzipUtil.extract(fileToInstall,
+                                installIntoDir,
+                                self._cfg.get(stripLevelKey, 0))
         return installIntoDir
 
     def install_from_build_pack(self, bpFile, toLocation=None):

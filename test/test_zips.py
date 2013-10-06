@@ -10,11 +10,14 @@ class TestUnzipUtil(object):
 
     HASH_FILE = './test/data/HASH'
     HASH_FILE_ZIP = './test/data/HASH.zip'
+    HASH_FILE_STRIP_ZIP = './test/data/HASH-STRIP.zip'
     HASH_FILE_BZ2 = './test/data/HASH.bz2'
     HASH_FILE_GZ = './test/data/HASH.gz'
     HASH_FILE_TAR = './test/data/HASH.tar'
     HASH_FILE_TARGZ = './test/data/HASH.tar.gz'
+    HASH_FILE_STRIP_TARGZ = './test/data/HASH.tar.gz'
     HASH_FILE_TARBZ2 = './test/data/HASH.tar.bz2'
+    HASH_FILE_STRIP_TARBZ2 = './test/data/HASH.tar.bz2'
 
     def __init__(self):
         self._hshUtil = HashUtil(
@@ -33,8 +36,25 @@ class TestUnzipUtil(object):
 
     def run_method(self, method, path):
         uzUtil = UnzipUtil({})
-        outPath = getattr(uzUtil, method)(path, self._dir)
+        path = os.path.abspath(path)
+        outPath = getattr(uzUtil, method)(path, self._dir, 0)
         assert len(outPath) > 0
+        if method == '_gunzip' or method == '_bunzip2':
+            assert outPath.endswith('HASH')
+        else:
+            assert 1 == len(os.listdir(outPath))
+            assert 'HASH' == os.listdir(outPath)[0]
+        assert outPath.startswith(self._dir)
+        assert os.path.exists(self._path)
+        assert self._hash == self._hshUtil.calculate_hash(self._path)
+
+    def run_method_strip(self, method, path):
+        uzUtil = UnzipUtil({})
+        path = os.path.abspath(path)
+        outPath = getattr(uzUtil, method)(path, self._dir, 1)
+        assert len(outPath) > 0
+        assert 1 == len(os.listdir(outPath))
+        assert 'HASH' == os.listdir(outPath)[0]
         assert outPath.startswith(self._dir)
         assert os.path.exists(self._path)
         assert self._hash == self._hshUtil.calculate_hash(self._path)
@@ -42,6 +62,10 @@ class TestUnzipUtil(object):
     @with_setup(setup=setUp, teardown=tearDown)
     def test_unzip(self):
         self.run_method('_unzip', self.HASH_FILE_ZIP)
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_unzip_strip_level(self):
+        self.run_method_strip('_unzip', self.HASH_FILE_STRIP_ZIP)
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_untar(self):
