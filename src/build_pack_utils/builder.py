@@ -250,6 +250,7 @@ class Builder(object):
         self._ctx = None
 
     def configure(self):
+        self._ctx = CloudFoundryUtil.initialize()
         return Configurer(self)
 
     def install(self):
