@@ -10,31 +10,36 @@ from downloads import Downloader
 
 
 class CloudFoundryUtil(object):
-    def __init__(self):
+    @staticmethod
+    def initialize():
         # Open stdout unbuffered
         if hasattr(sys.stdout, 'fileno'):
             sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+        ctx = {}
         # Build Pack Location
-        self.BP_DIR = os.path.dirname(os.path.dirname(sys.argv[0]))
+        ctx['BP_DIR'] = os.path.dirname(os.path.dirname(sys.argv[0]))
         # User's Application Files, build droplet here
-        self.BUILD_DIR = sys.argv[1]
+        ctx['BUILD_DIR'] = sys.argv[1]
         # Cache space for the build pack
-        self.CACHE_DIR = (len(sys.argv) == 3) and sys.argv[2] or None
+        ctx['CACHE_DIR'] = (len(sys.argv) == 3) and sys.argv[2] or None
         # Temp space
-        self.TEMP_DIR = os.environ.get('TMPDIR', tempfile.gettempdir())
-        tempfile.tempdir = self.TEMP_DIR
+        ctx['TEMP_DIR'] = os.environ.get('TMPDIR', tempfile.gettempdir())
+        tempfile.tempdir = ctx['TEMP_DIR']
         # Memory Limit
-        self.MEMORY_LIMIT = os.environ.get('MEMORY_LIMIT', None)
+        ctx['MEMORY_LIMIT'] = os.environ.get('MEMORY_LIMIT', None)
         # Make sure cache & build directories exist
-        if not os.path.exists(self.BUILD_DIR):
-            os.makedirs(self.BUILD_DIR)
-        if self.CACHE_DIR and not os.path.exists(self.CACHE_DIR):
-            os.makedirs(self.CACHE_DIR)
+        if not os.path.exists(ctx['BUILD_DIR']):
+            os.makedirs(ctx['BUILD_DIR'])
+        if ctx['CACHE_DIR'] and not os.path.exists(ctx['CACHE_DIR']):
+            os.makedirs(ctx['CACHE_DIR'])
+        return ctx
 
-    def load_json_config_file_from(self, folder, cfgFile):
-        return self.load_json_config_file(os.path.join(folder, cfgFile))
+    @staticmethod
+    def load_json_config_file_from(folder, cfgFile):
+        return CloudFoundryUtil.load_json_config_file(os.path.join(folder, cfgFile))
 
-    def load_json_config_file(self, cfgPath):
+    @staticmethod
+    def load_json_config_file(cfgPath):
         if os.path.exists(cfgPath):
             with open(cfgPath, 'rt') as cfgFile:
                 return json.load(cfgFile)
@@ -42,13 +47,12 @@ class CloudFoundryUtil(object):
 
 
 class CloudFoundryInstaller(object):
-    def __init__(self, cf, cfg):
-        self._cf = cf
-        self._cfg = cfg
-        self._unzipUtil = UnzipUtil(cfg)
-        self._hashUtil = HashUtil(cfg)
-        self._dcm = DirectoryCacheManager(cfg)
-        self._dwn = Downloader(cfg)
+    def __init__(self, ctx):
+        self._ctx = ctx
+        self._unzipUtil = UnzipUtil(ctx)
+        self._hashUtil = HashUtil(ctx)
+        self._dcm = DirectoryCacheManager(ctx)
+        self._dwn = Downloader(ctx)
 
     @staticmethod
     def _safe_makedirs(path):
@@ -60,30 +64,31 @@ class CloudFoundryInstaller(object):
                 raise e
 
     def install_binary(self, installKey):
-        fileName = self._cfg['%s_PACKAGE' % installKey]
-        digest = self._cfg['%s_PACKAGE_HASH' % installKey]
+        fileName = self._ctx['%s_PACKAGE' % installKey]
+        digest = self._ctx['%s_PACKAGE_HASH' % installKey]
         # check cache & compare digest
         # use cached file or download new
-        # download based on cfg settings
+        # download based on ctx settings
         fileToInstall = self._dcm.get(fileName, digest)
         if fileToInstall is None:
-            fileToInstall = os.path.join(self._cf.TEMP_DIR, fileName)
+            fileToInstall = os.path.join(self._ctx['TEMP_DIR'], fileName)
             self._dwn.download(
-                os.path.join(self._cfg['%s_DOWNLOAD_PREFIX' % installKey],
+                os.path.join(self._ctx['%s_DOWNLOAD_PREFIX' % installKey],
                              fileName),
                 fileToInstall)
             digest = self._hashUtil.calculate_hash(fileToInstall)
             fileToInstall = self._dcm.put(fileName, fileToInstall, digest)
         # unzip
-        # install to cfg determined location 'PACKAGE_INSTALL_DIR'
+        # install to ctx determined location 'PACKAGE_INSTALL_DIR'
         #  into or CF's BUILD_DIR
         pkgKey = '%s_PACKAGE_INSTALL_DIR' % installKey
-        stripLevelKey = '%s_STRIP_LEVEL' % installKey
-        installIntoDir = self._cfg.get(pkgKey, self._cf.BUILD_DIR)
-        self._unzipUtil.extract(fileToInstall,
-                                installIntoDir,
-                                self._cfg.get(stripLevelKey, 0))
-        return installIntoDir
+        stripKey = '%s_STRIP' % installKey
+        installIntoDir = os.path.join(
+            self._ctx.get(pkgKey, self._ctx['BUILD_DIR']),
+            installKey.lower())
+        return self._unzipUtil.extract(fileToInstall,
+                                       installIntoDir,
+                                       self._ctx.get(stripKey, False))
 
     def install_from_build_pack(self, bpFile, toLocation=None):
         """Copy file from the build pack to the droplet
@@ -95,9 +100,9 @@ class CloudFoundryInstaller(object):
                           relative to app droplet.  If not specified
                           uses the bpFile path.
         """
-        fullPathFrom = os.path.join(self._cf.BP_DIR, bpFile)
+        fullPathFrom = os.path.join(self._ctx['BP_DIR'], bpFile)
         fullPathTo = os.path.join(
-            self._cf.BUILD_DIR,
+            self._ctx['BUILD_DIR'],
             ((toLocation is None) and bpFile or toLocation))
         self._safe_makedirs(os.path.dirname(fullPathTo))
         shutil.copy(fullPathFrom, fullPathTo)
@@ -112,7 +117,7 @@ class CloudFoundryInstaller(object):
             toLocation -> location where to copy the file,
                           relative to app droplet.
         """
-        fullPathFrom = os.path.join(self._cf.BUILD_DIR, cfgFile)
-        fullPathTo = os.path.join(self._cf.BUILD_DIR, toLocation)
+        fullPathFrom = os.path.join(self._ctx['BUILD_DIR'], cfgFile)
+        fullPathTo = os.path.join(self._ctx['BUILD_DIR'], toLocation)
         self._safe_makedirs(os.path.dirname(fullPathTo))
         shutil.copy(fullPathFrom, fullPathTo)

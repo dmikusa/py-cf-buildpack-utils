@@ -6,7 +6,7 @@ from subprocess import PIPE
 class Downloader(object):
 
     def __init__(self, config):
-        self._cfg = config
+        self._ctx = config
 
     def download(self, url, toFile):
         res = urllib2.urlopen(url)
@@ -18,7 +18,7 @@ class Downloader(object):
 class CurlDownloader(object):
 
     def __init__(self, config):
-        self._cfg = config
+        self._ctx = config
 
     def download(self, url, toFile):
         proc = Popen(["curl", "-s",

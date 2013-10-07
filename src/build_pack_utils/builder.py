@@ -8,12 +8,11 @@ from cloudfoundry import CloudFoundryInstaller
 class Configurer(object):
     def __init__(self, builder):
         self.builder = builder
-        self.builder.cfg = {}
 
     def default_config(self):
         self._merge(
-            self.builder.cf.load_json_config_file_from(
-                self.builder.cf.BP_DIR,
+            CloudFoundryUtil.load_json_config_file_from(
+                self.builder._ctx['BP_DIR'],
                 'defaults/options.json'))
         return self
 
@@ -21,19 +20,17 @@ class Configurer(object):
         if path is None:
             path = os.path.join('config', 'options.json')
         self._merge(
-            self.builder.cf.load_json_config_file_from(
-                self.builder.cf.BUILD_DIR, path))
+            CloudFoundryUtil.load_json_config_file_from(
+                self.builder._ctx['BUILD_DIR'], path))
         return self
 
     def done(self):
-        self.builder.installer = \
-            CloudFoundryInstaller(
-                self.builder.cf,
-                self.builder.cfg)
+        self.builder._installer = \
+            CloudFoundryInstaller(self.builder._ctx)
         return self.builder
 
-    def _merge(self, cfg):
-        self.builder.cfg.update(cfg)
+    def _merge(self, ctx):
+        self.builder._ctx.update(ctx)
 
 
 class Installer(object):
@@ -41,8 +38,8 @@ class Installer(object):
         self.builder = builder
 
     def package(self, key):
-        self.builder.cfg['%s_INSTALL_PATH' % key] = \
-            self.builder.installer.install_binary(key)
+        self.builder._ctx['%s_INSTALL_PATH' % key] = \
+            self.builder._installer.install_binary(key)
         return self
 
     def packages(self, *keys):
@@ -86,7 +83,7 @@ class Runner(object):
 
     def command(self, command, shell=True):
         if hasattr(command, '__call__'):
-            self._cmd = command(self._builder.cfg)
+            self._cmd = command(self._builder._ctx)
         elif hasattr(command, 'split'):
             self._cmd = command.split(' ')
         else:
@@ -95,9 +92,9 @@ class Runner(object):
 
     def out_of(self, path):
         if hasattr(path, '__call__'):
-            self._path = path(self._builder.cfg)
-        elif path in self._builder.cfg.keys():
-            self._path = self._builder.cfg[path]
+            self._path = path(self._builder._ctx)
+        elif path in self._builder._ctx.keys():
+            self._path = self._builder._ctx[path]
         else:
             self._path = path
         return self
@@ -128,7 +125,7 @@ class Executor(object):
 
     def method(self, execute):
         if hasattr(execute, '__call__'):
-            execute(self.builder.cfg)
+            execute(self.builder._ctx)
         return self.builder
 
 
@@ -147,10 +144,10 @@ class StartScriptBuilder(object):
         return ScriptCommandBuilder(self)
 
     def write(self):
-        scriptName = self.builder.cfg.get('START_SCRIPT_NAME',
+        scriptName = self.builder._ctx.get('START_SCRIPT_NAME',
                                           'start.sh')
         startScriptPath = os.path.join(
-            self.builder.cf.BUILD_DIR, scriptName)
+            self.builder._ctx['BUILD_DIR'], scriptName)
         with open(startScriptPath, 'wt') as out:
             out.write('\n'.join(self.content))
         os.chmod(startScriptPath, 0755)
@@ -236,9 +233,9 @@ class EnvironmentVariableBuilder(object):
         builder = self._scriptBuilder.builder
         if hasattr(value, '__call__'):
             value = value()
-        elif value in builder.cfg.keys():
-            value = builder.cfg[value]
-        value = value.replace(builder.cf.BUILD_DIR, '$HOME')
+        elif value in builder._ctx.keys():
+            value = builder._ctx[value]
+        value = value.replace(builder._ctx['BUILD_DIR'], '$HOME')
         line = []
         if self._export:
             line.append('export')
@@ -249,9 +246,8 @@ class EnvironmentVariableBuilder(object):
 
 class Builder(object):
     def __init__(self):
-        self.cf = CloudFoundryUtil()
-        self.installer = None
-        self.cfg = None
+        self._installer = None
+        self._ctx = None
 
     def configure(self):
         return Configurer(self)

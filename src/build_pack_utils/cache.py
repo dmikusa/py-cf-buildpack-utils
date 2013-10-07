@@ -6,11 +6,11 @@ from hashes import ShaHashUtil
 
 class BaseCacheManager(object):
 
-    def __init__(self, config):
-        if config.get('USE_EXTERNAL_HASH', False):
-            self._hashUtil = ShaHashUtil(config)
+    def __init__(self, ctx):
+        if ctx.get('USE_EXTERNAL_HASH', False):
+            self._hashUtil = ShaHashUtil(ctx)
         else:
-            self._hashUtil = HashUtil(config)
+            self._hashUtil = HashUtil(ctx)
 
     def get(self, key, digest):
         return None
@@ -27,10 +27,10 @@ class BaseCacheManager(object):
 
 class DirectoryCacheManager(BaseCacheManager):
 
-    def __init__(self, config):
-        BaseCacheManager.__init__(self, config)
-        self._baseDir = config.get('FILE_CACHE_BASE_DIRECTORY', 
-                                   '/tmp/cache')
+    def __init__(self, ctx):
+        BaseCacheManager.__init__(self, ctx)
+        self._baseDir = ctx.get('FILE_CACHE_BASE_DIRECTORY', 
+                                ctx['CACHE_DIR'])
         if not os.path.exists(self._baseDir):
             os.makedirs(self._baseDir)
 

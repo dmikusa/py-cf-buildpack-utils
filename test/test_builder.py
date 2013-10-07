@@ -3,6 +3,7 @@ import stat
 import tempfile
 from nose.tools import eq_
 from nose.tools import raises
+from nose.tools import with_setup
 from dingus import Dingus
 from build_pack_utils import Runner
 from build_pack_utils import Configurer
@@ -14,70 +15,66 @@ from build_pack_utils import EnvironmentVariableBuilder
 
 
 class TestConfigurer(object):
-    def __init__(self):
-        self.cf = Dingus(BUILD_DIR='/tmp/build_dir',
-                         BP_DIR='/tmp/bp_dir')
-        self.builder = Dingus(cf=self.cf)
+    def setUp(self):
+        self.ctx = {
+            'BUILD_DIR': './test/data',
+            'BP_DIR': './test/data'
+        }
+        self.builder = Dingus(_ctx=self.ctx)
         self.cfgur = Configurer(self.builder)
-        self.cfg = Dingus()
-        self.cfgur.builder.cfg = self.cfg
 
+    @with_setup(setup=setUp)
     def test_default_config(self):
+        assert 2 == len(self.ctx.keys())
         res = self.cfgur.default_config()
-        assert self.cfg.update.calls().once()
-        assert self.cf.load_json_config_file_from().once()
-        assert 2 == len(self.cf.calls('load_json_config_file_from')[0].args)
-        assert '/tmp/bp_dir' == \
-            self.cf.calls('load_json_config_file_from')[0].args[0]
-        assert 'defaults/options.json' == \
-            self.cf.calls('load_json_config_file_from')[0].args[1]
+        assert 6 == len(self.ctx.keys())
+        assert 'BUILD_DIR' in self.ctx.keys()
+        assert 'BP_DIR' in self.ctx.keys()
+        assert 'list' in self.ctx.keys()
+        assert 'string' in self.ctx.keys()
+        assert 'int' in self.ctx.keys()
+        assert 'map' in self.ctx.keys()
         assert res is self.cfgur
 
+    @with_setup(setup=setUp)
     def test_user_config(self):
         res = self.cfgur.user_config()
-        assert self.cfg.update.calls().once()
-        assert self.cf.load_json_config_file_from().once()
-        assert 2 == len(self.cf.calls('load_json_config_file_from')[0].args)
-        assert '/tmp/build_dir' == \
-            self.cf.calls('load_json_config_file_from')[0].args[0]
-        assert 'config/options.json' == \
-            self.cf.calls('load_json_config_file_from')[0].args[1]
+        assert 6 == len(self.ctx.keys())
+        assert 'BUILD_DIR' in self.ctx.keys()
+        assert 'BP_DIR' in self.ctx.keys()
+        assert 'list' in self.ctx.keys()
+        assert 'string' in self.ctx.keys()
+        assert 'int' in self.ctx.keys()
+        assert 'map' in self.ctx.keys()
         assert res is self.cfgur
 
 
 class TestInstaller(object):
     def __init__(self):
-        self.cf = Dingus(BUILD_DIR='/tmp/build_dir',
-                         BP_DIR='/tmp/bp_dir')
-        self.cfg = Dingus()
-        self.installer = Dingus(__install_binary='/tmp/installed')
-        self.builder = Dingus(cf=self.cf,
-                              cfg=self.cfg,
-                              installer=self.installer)
+        self.ctx = {
+            'BUILD_DIR': '/tmp/build_dir',
+            'BP_DIR': '/tmp/build_dir'
+        }
+        self.builder = Dingus(_ctx=self.ctx,
+                              installer=None)
         self.inst = Installer(self.builder)
 
     def test_package(self):
+        self.builder._installer = Dingus(
+            install_binary__returns='/tmp/installed/TEST') 
         res = self.inst.package('TEST')
-        assert self.cfg.calls('__setitem__').once()
-        assert 'TEST_INSTALL_PATH' == \
-            self.cfg.calls('__setitem__')[0].args[0]
-        assert self.installer.install_binary.calls().once()
-        assert 'TEST' == \
-            self.installer.calls('install_binary')[0].args[0]
+        assert 'TEST_INSTALL_PATH' in self.ctx
+        eq_('/tmp/installed/TEST', self.ctx['TEST_INSTALL_PATH'])
         assert self.inst == res
 
     def test_packages(self):
+        self.builder._installer = Dingus()
+        self.builder._installer.install_binary = lambda x: '/tmp/installed/%s' % x
         res = self.inst.packages('TEST1', 'TEST2')
-        assert 2 == len(self.cfg.calls('__setitem__'))
-        assert 'TEST1_INSTALL_PATH' == \
-            self.cfg.calls('__setitem__')[0].args[0]
-        assert 'TEST2_INSTALL_PATH' == \
-            self.cfg.calls('__setitem__')[1].args[0]
-        assert 2 == len(self.installer.install_binary.calls())
-        assert 'TEST1' == \
-            self.installer.calls('install_binary')[0].args[0]
-        assert 'TEST2' == \
-            self.installer.calls('install_binary')[1].args[0]
+        assert 'TEST1_INSTALL_PATH' in self.ctx
+        eq_('/tmp/installed/TEST1', self.ctx['TEST1_INSTALL_PATH'])
+        assert 'TEST2_INSTALL_PATH' in self.ctx
+        eq_('/tmp/installed/TEST2', self.ctx['TEST2_INSTALL_PATH'])
         assert self.inst == res
 
     def test_done(self):
@@ -136,7 +133,7 @@ class TestRunner(object):
         r = Runner(self.builder)
         res = r.out_of('KEY')
         assert res is r
-        assert 'TEST' == r._path
+        eq_('KEY', r._path)
 
     def test_with_shell(self):
         r = Runner(self.builder)
@@ -229,9 +226,11 @@ class TestRunner(object):
 
 class TestStartScriptBuilder(object):
     def __init__(self):
-        self.cf = Dingus(BUILD_DIR=tempfile.gettempdir())
-        self.builder = Dingus(cf=self.cf,
-                              cfg={})
+        self.ctx = {
+            'BUILD_DIR': tempfile.gettempdir(),
+            'BP_DIR': '/tmp/build_dir'
+        }
+        self.builder = Dingus(_ctx=self.ctx)
 
     def test_write(self):
         b = StartScriptBuilder(self.builder)
@@ -412,9 +411,12 @@ class TestScriptCommandBuilder(object):
 
 class TestEnvironmentVariableBuilder(object):
     def __init__(self):
-        self.cf = Dingus(BUILD_DIR='/tmp/build_dir')
-        self.builder = Dingus(cf=self.cf,
-                              cfg={'VAL': '1234'})
+        self.ctx = {
+            'BUILD_DIR': '/tmp/build_dir',
+            'BP_DIR': '/tmp/bp_dir',
+            'VAL': '1234'
+        }
+        self.builder = Dingus(_ctx=self.ctx)
         self.ssb = Dingus(builder=self.builder)
 
     def test_export(self):

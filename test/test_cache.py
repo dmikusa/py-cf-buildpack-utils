@@ -30,6 +30,7 @@ class TestDirectoryCacheManager(object):
     def test_basics(self):
         path = os.path.join(tempfile.gettempdir(), "DCM")
         dcm = DirectoryCacheManager({
+            'CACHE_DIR': '/tmp/cache',
             'FILE_CACHE_BASE_DIRECTORY': path,
             'USE_EXTERNAL_HASH': False,
             'CACHE_HASH_ALGORITHM': 'sha256'})

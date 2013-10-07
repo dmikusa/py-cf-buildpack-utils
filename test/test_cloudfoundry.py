@@ -12,6 +12,7 @@ from build_pack_utils import CloudFoundryInstaller
 class TestCloudFoundryUtil(object):
 
     def setUp(self):
+        self.old_stdout = sys.stdout
         self.old_sys_argv = sys.argv
         sys.argv = [
             '/tmp/buildpacks/my-buildpack/bin/compile',
@@ -28,17 +29,18 @@ class TestCloudFoundryUtil(object):
         if os.path.exists(path):
             shutil.rmtree(path)
         sys.argv = self.old_sys_argv
+        sys.stdout = self.old_stdout
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_load_env(self):
-        cf = CloudFoundryUtil()
-        assert '/tmp/staged/app' == cf.BUILD_DIR
-        assert '/tmp/cache' == cf.CACHE_DIR
-        assert '/tmp' == cf.TEMP_DIR
-        assert '/tmp/buildpacks/my-buildpack' == cf.BP_DIR
-        assert '64m' == cf.MEMORY_LIMIT
-        assert os.path.exists(cf.BUILD_DIR)
-        assert os.path.exists(cf.CACHE_DIR)
+        ctx = CloudFoundryUtil.initialize()
+        assert '/tmp/staged/app' == ctx['BUILD_DIR']
+        assert '/tmp/cache' == ctx['CACHE_DIR']
+        assert '/tmp' == ctx['TEMP_DIR']
+        assert '/tmp/buildpacks/my-buildpack' == ctx['BP_DIR']
+        assert '64m' == ctx['MEMORY_LIMIT']
+        assert os.path.exists(ctx['BUILD_DIR'])
+        assert os.path.exists(ctx['CACHE_DIR'])
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_load_json_config_file(self):
@@ -72,18 +74,18 @@ class TestCloudFoundryUtil(object):
 class TestCloudFoundryInstallerBinaries(object):
     def test_install_binary_cached(self):
         # Setup mocks
-        #  use __new__ to skip constructor, we set that up here
-        installer = object.__new__(CloudFoundryInstaller)
-        installer._cf = Dingus('cf',
-                               BUILD_DIR='/tmp/build_dir',
-                               CACHE_DIR='/tmp/cache_dir')
-        installer._cfg = {
+        installer = CloudFoundryInstaller({
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TEMP_DIR': '/tmp/temp_dir',
             'LOCAL_PACKAGE': 'tomcat.tar.gz',
             'LOCAL_PACKAGE_HASH': '1234WXYZ',
             'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
             'LOCAL_PACKAGE_INSTALL_DIR': '/tmp/packages'
-        }
-        installer._unzipUtil = Dingus('unzip')
+        })
+        installer._unzipUtil = Dingus('unzip',
+                                      extract__returns='/tmp/packages/tomcat')
         installer._hashUtil = Dingus('hash',
                                      calculate_hash__returns='1234WXYZ')
         installer._dcm = Dingus('dcm', get__returns=None)
@@ -113,17 +115,16 @@ class TestCloudFoundryInstallerBinaries(object):
 
     def test_install_binary_not_cached(self):
         # Setup mocks
-        #  use __new__ to skip constructor, we set that up here
-        installer = object.__new__(CloudFoundryInstaller)
-        installer._cf = Dingus('cf',
-                               BUILD_DIR='/tmp/build_dir',
-                               CACHE_DIR='/tmp/cache_dir')
-        installer._cfg = {
+        installer = CloudFoundryInstaller({
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TEMP_DIR': '/tmp/temp_dir',
             'LOCAL_PACKAGE': 'tomcat.tar.gz',
             'LOCAL_PACKAGE_HASH': '1234WXYZ',
             'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
-        }
-        installer._unzipUtil = Dingus('unzip')
+        })
+        installer._unzipUtil = Dingus('unzip',
+                                      extract__returns='/tmp/build_dir/tomcat')
         installer._hashUtil = Dingus('hash',
                                      calculate_hash__returns='1234WXYZ')
         installer._dcm = Dingus('dcm', get__returns='/tmp/cache/tomcat.tar.gz')
@@ -160,12 +161,11 @@ class TestCloudFoundryInstallerConfig(object):
     @with_setup(setup=setUp, teardown=tearDown)
     def test_install_from_build_pack(self):
         # Setup mocks
-        #  use __new__ to skip constructor, we set that up here
-        installer = object.__new__(CloudFoundryInstaller)
-        installer._cf = Dingus(
-            'cf',
-            BP_DIR='./test/data',
-            BUILD_DIR=self._tmpDir)
+        installer = CloudFoundryInstaller({
+            'BP_DIR': './test/data',
+            'BUILD_DIR': self._tmpDir,
+            'CACHE_DIR': '/tmp/cache_dir'
+        })
         # Test copying files from build pack
         tmpConfig = os.path.join(self._tmpDir, 'config.json')
         # test with default toLocation
@@ -187,12 +187,11 @@ class TestCloudFoundryInstallerConfig(object):
     @with_setup(setup=setUp, teardown=tearDown)
     def test_install_from_app(self):
         # Setup mocks
-        #  use __new__ to skip constructor, we set that up here
-        installer = object.__new__(CloudFoundryInstaller)
-        installer._cf = Dingus(
-            'cf',
-            BP_DIR='./test/data',
-            BUILD_DIR=self._tmpDir)
+        installer = CloudFoundryInstaller({
+            'BP_DIR': './test/data',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'BUILD_DIR': self._tmpDir
+        })
         # Add file to temp dir
         installer.install_from_build_pack('config.json')
         # Test copying files from app

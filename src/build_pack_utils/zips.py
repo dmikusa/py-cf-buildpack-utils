@@ -2,7 +2,6 @@ import os
 import gzip
 import bz2
 import zipfile
-import tempfile
 import shutil
 from functools import partial
 from subprocess import Popen
@@ -12,10 +11,10 @@ from subprocess import PIPE
 class UnzipUtil(object):
 
     def __init__(self, config):
-        self._cfg = config
+        self._ctx = config
 
     def _unzip(self, zipFile, intoDir, strip):
-        tmpDir = (strip) and tempfile.gettempdir() or intoDir
+        tmpDir = (strip) and self._ctx['TEMP_DIR'] or intoDir
         zipIn = None
         try:
             zipIn = zipfile.ZipFile(zipFile, 'r')
@@ -78,10 +77,10 @@ class UnzipUtil(object):
             cmd.append('bunzip2 -c %s' % zipFile)
         if strip > 0:
             if compression is None:
-                cmd.append('tar xf --strip-components %d %s'
-                           % (strip, zipFile))
+                cmd.append('tar xf %s --strip-components %d'
+                           % (zipFile, strip))
             else:
-                cmd.append('tar xf --strip-components %d -' % strip)
+                cmd.append('tar xf - --strip-components %d' % strip)
         else:
             if compression is None:
                 cmd.append('tar xf %s' % zipFile)
