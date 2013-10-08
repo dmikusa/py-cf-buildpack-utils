@@ -76,8 +76,11 @@ class Runner(object):
                 else:
                     if retcode == 0 and self._on_success:
                         self._on_success(self._cmd, retcode, stdout)
-                    else:
+                    elif retcode != 0 and self._on_fail:
                         self._on_fail(self._cmd, retcode, stderr)
+                    elif retcode != 0:
+                        print 'Command [%s] failed with [%d], add an "on_fail" ' \
+                            'or "on_finish" method to debug further' % (self._cmd, retcode)
             finally:
                 os.chdir(cwd)
         return self._builder
