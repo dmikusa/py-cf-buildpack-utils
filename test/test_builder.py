@@ -169,6 +169,17 @@ class TestRunner(object):
         assert method is r._on_finish
         assert 0 == len(method.calls())
 
+    def test_environment_variable(self):
+        r = Runner(self.builder)
+        preLen = len(r._env.keys())
+        res = (r.environment_variable()
+                   .name('JUNK')
+                   .value('2134'))
+        assert r is res
+        assert 1 == (len(r._env.keys()) - preLen)
+        assert 'JUNK' in r._env.keys()
+        eq_('2134', r._env['JUNK'])
+
     def test_done(self):
         on_success = Dingus()
         r = Runner(self.builder)
@@ -222,6 +233,17 @@ class TestRunner(object):
         assert '' == on_finish.calls()[0].args[2]
         assert on_finish.calls()[0].args[3].find(
             'No such file or directory') >= 0
+
+    def test_done_env(self):
+        on_finish = Dingus()
+        r = Runner(self.builder)
+        r.on_finish(on_finish)
+        r.command('env')
+        r.environment_variable().name('HELLO').value('Hello World!')
+        res = r.done()
+        assert res is self.builder
+        assert on_finish.calls().once()
+        assert on_finish.calls()[0].args[2].find('HELLO=Hello World!') > -1
 
 
 class TestStartScriptBuilder(object):
