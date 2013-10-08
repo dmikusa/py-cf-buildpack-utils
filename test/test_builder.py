@@ -245,6 +245,18 @@ class TestRunner(object):
         assert on_finish.calls().once()
         assert on_finish.calls()[0].args[2].find('HELLO=Hello World!') > -1
 
+    def test_done_args_with_shell(self):
+        on_finish = Dingus()
+        r = Runner(self.builder)
+        r.on_finish(on_finish)
+        r.command('ls -la /tmp')
+        r.with_shell()
+        res = r.done()
+        assert res is self.builder
+        assert on_finish.calls().once()
+        assert (on_finish.calls()[0].args[2].find('hsperfdata_cloud') > -1 or
+                on_finish.calls()[0].args[2].find('private') > -1)
+
 
 class TestStartScriptBuilder(object):
     def __init__(self):

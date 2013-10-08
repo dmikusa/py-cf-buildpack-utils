@@ -92,6 +92,8 @@ class Runner(object):
             self._cmd = command.split(' ')
         else:
             self._cmd = command
+        if self._shell:
+            self._cmd = ' '.join(self._cmd)
         return self
 
     def out_of(self, path):
@@ -105,6 +107,8 @@ class Runner(object):
 
     def with_shell(self):
         self._shell = True
+        if not hasattr(self._cmd, 'strip'):
+            self._cmd = ' '.join(self._cmd)
         return self
 
     def on_success(self, on_success):
