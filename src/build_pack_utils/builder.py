@@ -291,4 +291,4 @@ class Builder(object):
         return Executor(self)
 
     def create_start_script(self):
-        return StartScriptBuilder()
+        return StartScriptBuilder(self)
