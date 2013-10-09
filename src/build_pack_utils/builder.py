@@ -25,8 +25,6 @@ class Configurer(object):
         return self
 
     def done(self):
-        self.builder._installer = \
-            CloudFoundryInstaller(self.builder._ctx)
         return self.builder
 
     def _merge(self, ctx):
@@ -36,10 +34,11 @@ class Configurer(object):
 class Installer(object):
     def __init__(self, builder):
         self.builder = builder
+        self._installer = CloudFoundryInstaller(self.builder._ctx)
 
     def package(self, key):
         self.builder._ctx['%s_INSTALL_PATH' % key] = \
-            self.builder._installer.install_binary(key)
+            self._installer.install_binary(key)
         return self
 
     def packages(self, *keys):
