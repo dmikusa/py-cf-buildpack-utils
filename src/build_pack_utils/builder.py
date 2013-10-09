@@ -284,7 +284,7 @@ class ScriptCommandBuilder(object):
     def with_argument(self, argument):
         if hasattr(argument, '__call__'):
             argument = argument()
-        elif value in builder._ctx.keys():
+        elif argument in builder._ctx.keys():
             argument = builder._ctx[argument]
         self._args.append(argument)
         return self
