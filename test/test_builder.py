@@ -157,7 +157,7 @@ class TestDetector(object):
             eq_(1, e.code)
         finally:
             sys.stdout = old_sysout
-        eq_('', new_sysout.getvalue())
+        eq_('no\n', new_sysout.getvalue())
 
 
 class TestInstaller(object):

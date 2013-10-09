@@ -104,6 +104,7 @@ class Detecter(object):
             if self._detecter.search(self._root):
                 print self._output
                 sys.exit(0)
+        print 'no'
         sys.exit(1)
 
 
