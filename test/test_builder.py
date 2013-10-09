@@ -432,37 +432,38 @@ class TestStartScriptBuilder(object):
 
 class TestScriptCommandBuilder(object):
     def __init__(self):
+        self.builder = Dingus()
         self.ssb = Dingus()
 
     def test_manual(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         res = scb.manual('ls -la')
         assert res is scb
         assert len(scb._content) == 1
         assert 'ls -la' == scb._content[0]
 
     def test_run(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         res = scb.run('ls')
         assert res is scb
         assert 'ls' == scb._command
 
     def test_with_argument(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         res = scb.with_argument('-la')
         assert res is scb
         assert 1 == len(scb._args)
         assert '-la' == scb._args[0]
 
     def test_background(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         assert not scb._background
         res = scb.background()
         assert res is scb
         assert scb._background
 
     def test_redirect(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         res = scb.redirect(stderr=1, stdout=2, both=3)
         assert res is scb
         assert 1 == scb._stderr
@@ -470,7 +471,7 @@ class TestScriptCommandBuilder(object):
         assert 3 == scb._both
 
     def test_pipe(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.background()
         assert scb._background
         res = scb.pipe()
@@ -478,7 +479,7 @@ class TestScriptCommandBuilder(object):
         assert not scb._background
 
     def test_done_simple(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.run('ls')
         scb.with_argument('-la')
         scb.with_argument('/some/path')
@@ -488,7 +489,7 @@ class TestScriptCommandBuilder(object):
         assert 'ls -la /some/path' == self.ssb.calls()[0].args[0]
 
     def test_done_redirect_stderr(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.run('ls')
         scb.with_argument('-la')
         scb.redirect(stderr='/dev/null')
@@ -498,7 +499,7 @@ class TestScriptCommandBuilder(object):
         assert 'ls -la 2> /dev/null' == self.ssb.calls()[0].args[0]
 
     def test_done_redirect_stdout(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.run('ls')
         scb.with_argument('-la')
         scb.redirect(stdout='/dev/null')
@@ -508,7 +509,7 @@ class TestScriptCommandBuilder(object):
         assert 'ls -la > /dev/null' == self.ssb.calls()[0].args[0]
 
     def test_done_redirect_both(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.run('ls')
         scb.with_argument('-la')
         scb.redirect(both='/dev/null')
@@ -518,7 +519,7 @@ class TestScriptCommandBuilder(object):
         assert 'ls -la &> /dev/null' == self.ssb.calls()[0].args[0]
 
     def test_done_background(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.run('ls')
         scb.with_argument('-la')
         scb.background()
@@ -528,7 +529,7 @@ class TestScriptCommandBuilder(object):
         assert 'ls -la &' == self.ssb.calls()[0].args[0]
 
     def test_done_pipe(self):
-        scb = ScriptCommandBuilder(self.ssb)
+        scb = ScriptCommandBuilder(self.builder, self.ssb)
         scb.run('ps')
         scb.with_argument('aux')
         subCmd = scb.pipe()
@@ -541,7 +542,7 @@ class TestScriptCommandBuilder(object):
         eq_('ps aux | grep catalina', self.ssb.calls()[0].args[0])
 
     def test_done_fancy(self):
-        res = (ScriptCommandBuilder(self.ssb)
+        res = (ScriptCommandBuilder(self.builder, self.ssb)
                    .run('ps')
                    .with_argument('aux')
                    .pipe()

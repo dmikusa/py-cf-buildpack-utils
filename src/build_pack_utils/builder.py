@@ -249,7 +249,7 @@ class StartScriptBuilder(object):
         return EnvironmentVariableBuilder(self)
 
     def command(self):
-        return ScriptCommandBuilder(self)
+        return ScriptCommandBuilder(self.builder, self)
 
     def write(self):
         scriptName = self.builder._ctx.get('START_SCRIPT_NAME',
@@ -263,7 +263,8 @@ class StartScriptBuilder(object):
 
 
 class ScriptCommandBuilder(object):
-    def __init__(self, scriptBuilder):
+    def __init__(self, builder, scriptBuilder):
+        self._builder = builder
         self._scriptBuilder = scriptBuilder
         self._command = None
         self._args = []
@@ -284,8 +285,8 @@ class ScriptCommandBuilder(object):
     def with_argument(self, argument):
         if hasattr(argument, '__call__'):
             argument = argument()
-        elif argument in builder._ctx.keys():
-            argument = builder._ctx[argument]
+        elif argument in self._builder._ctx.keys():
+            argument = self._builder._ctx[argument]
         self._args.append(argument)
         return self
 
@@ -302,7 +303,7 @@ class ScriptCommandBuilder(object):
     def pipe(self):
         # background should be on last command only
         self._background = False
-        return ScriptCommandBuilder(self)
+        return ScriptCommandBuilder(self._builder, self)
 
     def done(self):
         cmd = []
