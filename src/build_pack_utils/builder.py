@@ -375,3 +375,8 @@ class Builder(object):
 
     def detect(self):
         return Detecter(self)
+
+    def release(self):
+        print 'default_process_types:'
+        print '  web: %s' % self._ctx.get('START_SCRIPT_NAME',
+                                          '$HOME/start.sh')

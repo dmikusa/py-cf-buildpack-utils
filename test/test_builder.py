@@ -15,6 +15,7 @@ from build_pack_utils import StartScriptBuilder
 from build_pack_utils import ScriptCommandBuilder
 from build_pack_utils import EnvironmentVariableBuilder
 from build_pack_utils import Detecter
+from build_pack_utils import Builder
 
 
 class TestConfigurer(object):
@@ -135,7 +136,7 @@ class TestDetector(object):
             d.by_name('HASH')
             d.if_found_output('HASH')
             d.done()
-            assert False # shouldFail
+            assert False  # shouldFail
         except SystemExit, e:
             eq_(0, e.code)
         finally:
@@ -152,7 +153,7 @@ class TestDetector(object):
             d.by_name('NOTFOUND')
             d.if_found_output('HASH')
             d.done()
-            assert False # shouldFail
+            assert False  # shouldFail
         except SystemExit, e:
             eq_(1, e.code)
         finally:
@@ -172,7 +173,7 @@ class TestInstaller(object):
 
     def test_package(self):
         self.inst._installer = Dingus(
-            install_binary__returns='/tmp/installed/TEST') 
+            install_binary__returns='/tmp/installed/TEST')
         res = self.inst.package('TEST')
         assert 'TEST_INSTALL_PATH' in self.ctx
         eq_('/tmp/installed/TEST', self.ctx['TEST_INSTALL_PATH'])
@@ -605,3 +606,37 @@ class TestEnvironmentVariableBuilder(object):
         res = evb.value('VAL')
         assert res is self.ssb
         eq_('TEST=1234', self.ssb.calls()[0].args[0])
+
+
+class TestBuilder(object):
+    def test_release(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            b = Builder()
+            b.configure()
+            b.release()
+        finally:
+            sys.stdout = old_sysout
+        lines = new_sysout.getvalue().split('\n')
+        assert 3 == len(lines)
+        eq_('default_process_types:', lines[0])
+        eq_('  web: $HOME/start.sh', lines[1])
+
+    def test_release_custom_script(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            b = Builder()
+            b.configure()
+            b._ctx['START_SCRIPT_NAME'] = '$HOME/my-start-script.sh'
+            b.release()
+        finally:
+            sys.stdout = old_sysout
+        lines = new_sysout.getvalue().split('\n')
+        assert 3 == len(lines)
+        eq_('default_process_types:', lines[0])
+        eq_('  web: $HOME/my-start-script.sh', lines[1])
+        eq_('', lines[2])
