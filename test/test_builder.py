@@ -1,6 +1,8 @@
 import os
+import sys
 import stat
 import tempfile
+from StringIO import StringIO
 from nose.tools import eq_
 from nose.tools import raises
 from nose.tools import with_setup
@@ -12,6 +14,7 @@ from build_pack_utils import Executor
 from build_pack_utils import StartScriptBuilder
 from build_pack_utils import ScriptCommandBuilder
 from build_pack_utils import EnvironmentVariableBuilder
+from build_pack_utils import Detecter
 
 
 class TestConfigurer(object):
@@ -47,6 +50,114 @@ class TestConfigurer(object):
         assert 'int' in self.ctx.keys()
         assert 'map' in self.ctx.keys()
         assert res is self.cfgur
+
+
+class TestDetector(object):
+    def __init__(self):
+        self.ctx = {
+            'BUILD_DIR': '/tmp/build_dir'
+        }
+        self.builder = Dingus(_ctx=self.ctx)
+
+    def test_with_regex(self):
+        d = Detecter(self.builder)
+        res = d.with_regex('^.*\.php$')
+        assert res is d
+        assert d._detecter._match('index.php')
+
+    def test_by_name(self):
+        d = Detecter(self.builder)
+        res = d.by_name('index.php')
+        assert res is d
+        assert d._detecter._match('index.php')
+
+    def test_starts_with(self):
+        d = Detecter(self.builder)
+        res = d.starts_with('index')
+        assert res is d
+        assert d._detecter._match('index.php')
+
+    def test_ends_with(self):
+        d = Detecter(self.builder)
+        res = d.ends_with('.php')
+        assert res is d
+        assert d._detecter._match('index.php')
+
+    def test_contains(self):
+        d = Detecter(self.builder)
+        res = d.contains('dex')
+        assert res is d
+        assert d._detecter._match('index.php')
+
+    def test_recursive(self):
+        d = Detecter(self.builder)
+        d.by_name('index.php')
+        res = d.recursive()
+        assert res is d
+        assert d._recursive
+        assert d._detecter.recursive
+
+    def test_using_full_path(self):
+        d = Detecter(self.builder)
+        d.by_name('index.php')
+        res = d.using_full_path()
+        assert res is d
+        assert d._fullPath
+        assert d._detecter.fullPath
+
+    def test_if_found_output(self):
+        d = Detecter(self.builder)
+        res = d.if_found_output('TEST')
+        assert res is d
+        eq_('TEST', d._output)
+
+    def test_under(self):
+        d = Detecter(self.builder)
+        res = d.under('TEST')
+        assert res is d
+        eq_('TEST', d._root)
+        assert d._recursive
+
+    def test_at(self):
+        d = Detecter(self.builder)
+        res = d.at('TEST')
+        assert res is d
+        eq_('TEST', d._root)
+        assert not d._recursive
+
+    def test_done_found(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            d = Detecter(self.builder)
+            d.at('./test/data')
+            d.by_name('HASH')
+            d.if_found_output('HASH')
+            d.done()
+            assert False # shouldFail
+        except SystemExit, e:
+            eq_(0, e.code)
+        finally:
+            sys.stdout = old_sysout
+        eq_('HASH\n', new_sysout.getvalue())
+
+    def test_done_not_found(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            d = Detecter(self.builder)
+            d.at('./test/data')
+            d.by_name('NOTFOUND')
+            d.if_found_output('HASH')
+            d.done()
+            assert False # shouldFail
+        except SystemExit, e:
+            eq_(1, e.code)
+        finally:
+            sys.stdout = old_sysout
+        eq_('', new_sysout.getvalue())
 
 
 class TestInstaller(object):

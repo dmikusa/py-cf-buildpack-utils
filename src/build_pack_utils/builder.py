@@ -1,8 +1,14 @@
 import os
+import sys
 from subprocess import Popen
 from subprocess import PIPE
 from cloudfoundry import CloudFoundryUtil
 from cloudfoundry import CloudFoundryInstaller
+from detecter import TextFileSearch
+from detecter import RegexFileSearch
+from detecter import StartsWithFileSearch
+from detecter import EndsWithFileSearch
+from detecter import ContainsFileSearch
 
 
 class Configurer(object):
@@ -29,6 +35,76 @@ class Configurer(object):
 
     def _merge(self, ctx):
         self.builder._ctx.update(ctx)
+
+
+class Detecter(object):
+    def __init__(self, builder):
+        self._builder = builder
+        self._detecter = None
+        self._recursive = False
+        self._fullPath = False
+        self._output = 'Found'
+        self._root = builder._ctx['BUILD_DIR']
+
+    def _config(self, detecter):
+        detecter.recursive = self._recursive
+        detecter.fullPath = self._fullPath
+        return detecter
+
+    def with_regex(self, regex):
+        self._detecter = self._config(RegexFileSearch(regex))
+        return self
+
+    def by_name(self, name):
+        self._detecter = self._config(TextFileSearch(name))
+        return self
+
+    def starts_with(self, text):
+        self._detecter = self._config(StartsWithFileSearch(text))
+        return self
+
+    def ends_with(self, text):
+        self._detecter = self._config(EndsWithFileSearch(text))
+        return self
+
+    def contains(self, text):
+        self._detecter = self._config(ContainsFileSearch(text))
+        return self
+
+    def recursive(self):
+        self._recursive = True
+        if self._detecter:
+            self._detecter.recursive = True
+        return self
+
+    def using_full_path(self):
+        self._fullPath = True
+        if self._detecter:
+            self._detecter.fullPath = True
+        return self
+
+    def if_found_output(self, text):
+        self._output = text
+        return self
+
+    def under(self, root):
+        self._root = root
+        self.recursive()
+        return self
+
+    def at(self, root):
+        self._root = root
+        return self
+
+    def done(self):
+        # calls to sys.exit are expected here and needed to
+        #  conform to the requirements of CF's detect script
+        #  which must set exit codes
+        if self._detecter:
+            if self._detecter.search(self._root):
+                print self._output
+                sys.exit(0)
+        sys.exit(1)
 
 
 class Installer(object):
@@ -78,8 +154,9 @@ class Runner(object):
                     elif retcode != 0 and self._on_fail:
                         self._on_fail(self._cmd, retcode, stderr)
                     elif retcode != 0:
-                        print 'Command [%s] failed with [%d], add an "on_fail" ' \
-                            'or "on_finish" method to debug further' % (self._cmd, retcode)
+                        print 'Command [%s] failed with [%d], add an ' \
+                            '"on_fail" or "on_finish" method to debug ' \
+                            'further' % (self._cmd, retcode)
             finally:
                 os.chdir(cwd)
         return self._builder
@@ -175,7 +252,7 @@ class StartScriptBuilder(object):
 
     def write(self):
         scriptName = self.builder._ctx.get('START_SCRIPT_NAME',
-                                          'start.sh')
+                                           'start.sh')
         startScriptPath = os.path.join(
             self.builder._ctx['BUILD_DIR'], scriptName)
         with open(startScriptPath, 'wt') as out:
@@ -294,3 +371,6 @@ class Builder(object):
 
     def create_start_script(self):
         return StartScriptBuilder(self)
+
+    def detect(self):
+        return Detecter(self)
