@@ -7,6 +7,7 @@ from zips import UnzipUtil
 from hashes import HashUtil
 from cache import DirectoryCacheManager
 from downloads import Downloader
+from downloads import CurlDownloader
 
 
 class CloudFoundryUtil(object):
@@ -52,7 +53,29 @@ class CloudFoundryInstaller(object):
         self._unzipUtil = UnzipUtil(ctx)
         self._hashUtil = HashUtil(ctx)
         self._dcm = DirectoryCacheManager(ctx)
-        self._dwn = Downloader(ctx)
+        self._dwn = self._get_downloader(ctx)(ctx)
+
+    def _get_downloader(self, ctx):
+        method = ctx.get('DOWNLOAD_METHOD', 'python')
+        if method == 'python':
+            return Downloader
+        elif method == 'curl':
+            return CurlDownloader
+        elif method == 'custom':
+            fullClsName = ctx['DOWNLOAD_CLASS']
+            dotLoc = fullClsName.rfind('.')
+            if dotLoc >= 0:
+                clsName = fullClsName[dotLoc + 1: len(fullClsName)]
+                modName = fullClsName[0:dotLoc]
+                m = __import__(modName, globals(), locals(), [clsName])
+                try:
+                    return getattr(m, clsName)
+                except AttributeError:
+                    print 'WARNING: DOWNLOAD_CLASS not found!'
+            else:
+                print 'WARNING: DOWNLOAD_CLASS invalid, must include ' \
+                      'package name!'
+        return Downloader
 
     @staticmethod
     def _safe_makedirs(path):

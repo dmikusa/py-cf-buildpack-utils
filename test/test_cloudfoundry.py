@@ -7,6 +7,8 @@ from nose.tools import eq_
 from nose.tools import with_setup
 from build_pack_utils import CloudFoundryUtil
 from build_pack_utils import CloudFoundryInstaller
+from build_pack_utils import Downloader
+from build_pack_utils import CurlDownloader
 
 
 class TestCloudFoundryUtil(object):
@@ -71,7 +73,54 @@ class TestCloudFoundryUtil(object):
         assert cfg == {}
 
 
+class CustomDownloader(Downloader):
+    pass
+
+
 class TestCloudFoundryInstallerBinaries(object):
+    def test_get_downloader_python(self):
+        installer = CloudFoundryInstaller({
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TEMP_DIR': '/tmp/temp_dir',
+            'DOWNLOAD_METHOD': 'python'
+        })
+        eq_(Downloader, type(installer._dwn))
+
+    def test_get_downloader_curl(self):
+        installer = CloudFoundryInstaller({
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TEMP_DIR': '/tmp/temp_dir',
+            'DOWNLOAD_METHOD': 'curl'
+        })
+        eq_(CurlDownloader, type(installer._dwn))
+
+    def test_get_downloader_custom(self):
+        installer = CloudFoundryInstaller({
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TEMP_DIR': '/tmp/temp_dir',
+            'DOWNLOAD_METHOD': 'custom',
+            'DOWNLOAD_CLASS': 'test_cloudfoundry.CustomDownloader'
+        })
+        assert isinstance(installer._dwn, Downloader)
+        eq_(CustomDownloader, type(installer._dwn))
+
+    def test_get_downloader_custom_not_found(self):
+        installer = CloudFoundryInstaller({
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TEMP_DIR': '/tmp/temp_dir',
+            'DOWNLOAD_METHOD': 'custom',
+            'DOWNLOAD_CLASS': 'test_cloudfoundry.CustomDownloade'
+        })
+        eq_(Downloader, type(installer._dwn))
+
     def test_install_binary_cached(self):
         # Setup mocks
         installer = CloudFoundryInstaller({
