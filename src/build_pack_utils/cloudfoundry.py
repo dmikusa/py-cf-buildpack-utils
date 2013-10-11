@@ -37,7 +37,8 @@ class CloudFoundryUtil(object):
 
     @staticmethod
     def load_json_config_file_from(folder, cfgFile):
-        return CloudFoundryUtil.load_json_config_file(os.path.join(folder, cfgFile))
+        return CloudFoundryUtil.load_json_config_file(os.path.join(folder,
+                                                                   cfgFile))
 
     @staticmethod
     def load_json_config_file(cfgPath):

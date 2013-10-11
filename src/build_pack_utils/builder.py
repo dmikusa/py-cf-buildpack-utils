@@ -123,8 +123,40 @@ class Installer(object):
             self.package(key)
         return self
 
+    def config(self):
+        return ConfigInstaller(self)
+
     def done(self):
         return self.builder
+
+
+class ConfigInstaller(object):
+    def __init__(self, installer):
+        self._installer = installer
+        self._cfInst = installer._installer
+        self._ctx = installer.builder._ctx
+        self._copy_method = self._cfInst.install_from_build_pack
+        self._fromFile = None
+        self._toPath = self._ctx['BUILD_DIR']
+
+    def from_build_pack(self, fromFile):
+        self._copy_method = self._cfInst.install_from_build_pack
+        self._fromFile = fromFile
+        return self
+
+    def from_application(self, fromFile):
+        self._copy_method = self._cfInst.install_from_application
+        self._fromFile = fromFile
+        return self
+
+    def to(self, toPath):
+        self._toPath = os.path.join(self._ctx['BUILD_DIR'], toPath)
+        return self
+
+    def done(self):
+        if self._fromFile:
+            self._copy_method(self._fromFile, self._toPath)
+        return self._installer
 
 
 class Runner(object):

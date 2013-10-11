@@ -16,6 +16,7 @@ from build_pack_utils import ScriptCommandBuilder
 from build_pack_utils import EnvironmentVariableBuilder
 from build_pack_utils import Detecter
 from build_pack_utils import Builder
+from build_pack_utils import ConfigInstaller
 
 
 class TestConfigurer(object):
@@ -192,6 +193,59 @@ class TestInstaller(object):
     def test_done(self):
         res = self.inst.done()
         assert self.builder == res
+
+
+class TestConfigInstaller(object):
+    def __init__(self):
+        self.ctx = {
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache',
+            'BP_DIR': '/tmp/build_dir'
+        }
+        self.cfInst = Dingus()
+        self.builder = Dingus(_ctx=self.ctx)
+        self.inst = Installer(self.builder)
+        self.inst._installer = self.cfInst
+        self.cfgInst = ConfigInstaller(self.inst)
+
+    def test_from_build_pack(self):
+        res = self.cfgInst.from_build_pack('some/file.txt')
+        assert res is self.cfgInst
+        eq_('some/file.txt', self.cfgInst._fromFile)
+        eq_('install_from_build_pack', self.cfgInst._copy_method.__name__)
+
+    def test_from_application(self):
+        res = self.cfgInst.from_application('some/file.txt')
+        assert res is self.cfgInst
+        eq_('some/file.txt', self.cfgInst._fromFile)
+        eq_('install_from_application', self.cfgInst._copy_method.__name__)
+
+    def test_to(self):
+        res = self.cfgInst.to('some/other/file.txt')
+        assert res is self.cfgInst
+        eq_('/tmp/build_dir/some/other/file.txt', self.cfgInst._toPath)
+
+    def test_done_build_pack(self):
+        self.cfgInst.from_build_pack('some/file.txt')
+        self.cfgInst.to('some/other/file.txt')
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_('install_from_build_pack', self.cfInst.calls()[0].name)
+        assert 2 == len(self.cfInst.calls()[0].args)
+        eq_('some/file.txt', self.cfInst.calls()[0].args[0])
+        eq_('/tmp/build_dir/some/other/file.txt',
+            self.cfInst.calls()[0].args[1])
+
+    def test_done_application(self):
+        self.cfgInst.from_application('some/file.txt')
+        self.cfgInst.to('some/path')
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_('install_from_application', self.cfInst.calls()[0].name)
+        assert 2 == len(self.cfInst.calls()[0].args)
+        eq_('some/file.txt', self.cfInst.calls()[0].args[0])
+        eq_('/tmp/build_dir/some/path',
+            self.cfInst.calls()[0].args[1])
 
 
 class TestExecutor(object):
