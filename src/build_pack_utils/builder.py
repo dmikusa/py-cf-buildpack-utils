@@ -178,10 +178,12 @@ class ConfigInstaller(object):
                         self._cfInst.install_from_build_pack(fromFile, toFile)
                 if self._app_path:
                     root = os.path.join(self._ctx['BUILD_DIR'], self._app_path)
-                    for item in os.listdir(root):
-                        fromFile = os.path.join(self._app_path, item)
-                        toFile = os.path.join(self._to_path, item)
-                        self._cfInst.install_from_application(fromFile, toFile)
+                    if os.path.exists(root) and os.path.isdir(root):
+                        for item in os.listdir(root):
+                            fromFile = os.path.join(self._app_path, item)
+                            toFile = os.path.join(self._to_path, item)
+                            self._cfInst.install_from_application(fromFile,
+                                                                  toFile)
         return self._installer
 
 
