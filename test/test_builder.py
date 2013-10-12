@@ -198,9 +198,9 @@ class TestInstaller(object):
 class TestConfigInstaller(object):
     def __init__(self):
         self.ctx = {
-            'BUILD_DIR': '/tmp/build_dir',
+            'BUILD_DIR': 'test/data/',
             'CACHE_DIR': '/tmp/cache',
-            'BP_DIR': '/tmp/build_dir'
+            'BP_DIR': 'test/data/'
         }
         self.cfInst = Dingus()
         self.builder = Dingus(_ctx=self.ctx)
@@ -211,21 +211,43 @@ class TestConfigInstaller(object):
     def test_from_build_pack(self):
         res = self.cfgInst.from_build_pack('some/file.txt')
         assert res is self.cfgInst
-        eq_('some/file.txt', self.cfgInst._fromFile)
-        eq_('install_from_build_pack', self.cfgInst._copy_method.__name__)
+        eq_('some/file.txt', self.cfgInst._bp_path)
+
+    def test_or_from_build_pack(self):
+        res = self.cfgInst.or_from_build_pack('some/file.txt')
+        assert res is self.cfgInst
+        eq_('some/file.txt', self.cfgInst._bp_path)
 
     def test_from_application(self):
         res = self.cfgInst.from_application('some/file.txt')
         assert res is self.cfgInst
-        eq_('some/file.txt', self.cfgInst._fromFile)
-        eq_('install_from_application', self.cfgInst._copy_method.__name__)
+        eq_('some/file.txt', self.cfgInst._app_path)
 
     def test_to(self):
         res = self.cfgInst.to('some/other/file.txt')
         assert res is self.cfgInst
-        eq_('/tmp/build_dir/some/other/file.txt', self.cfgInst._toPath)
+        eq_('some/other/file.txt', self.cfgInst._to_path)
 
-    def test_done_build_pack(self):
+    def test_all_files(self):
+        assert not self.cfgInst._all_files
+        res = self.cfgInst.all_files()
+        assert res is self.cfgInst
+        assert self.cfgInst._all_files
+
+    def test_done_nothing(self):
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_(0, len(self.cfInst.calls()))
+        self.cfgInst.to('some/path')
+        self.cfgInst.done()
+        eq_(0, len(self.cfInst.calls()))
+        self.cfgInst._to_path = None
+        self.cfgInst.from_build_pack('some/path')
+        eq_(0, len(self.cfInst.calls()))
+        self.cfgInst.from_application('some/path')
+        eq_(0, len(self.cfInst.calls()))
+
+    def test_done_single_bp(self):
         self.cfgInst.from_build_pack('some/file.txt')
         self.cfgInst.to('some/other/file.txt')
         res = self.cfgInst.done()
@@ -233,20 +255,92 @@ class TestConfigInstaller(object):
         eq_('install_from_build_pack', self.cfInst.calls()[0].name)
         assert 2 == len(self.cfInst.calls()[0].args)
         eq_('some/file.txt', self.cfInst.calls()[0].args[0])
-        eq_('/tmp/build_dir/some/other/file.txt',
-            self.cfInst.calls()[0].args[1])
+        eq_('some/other/file.txt', self.cfInst.calls()[0].args[1])
 
-    def test_done_application(self):
+    def test_done_single_app(self):
         self.cfgInst.from_application('some/file.txt')
-        self.cfgInst.to('some/path')
+        self.cfgInst.to('some/other/file.txt')
         res = self.cfgInst.done()
         assert res is self.inst
         eq_('install_from_application', self.cfInst.calls()[0].name)
         assert 2 == len(self.cfInst.calls()[0].args)
         eq_('some/file.txt', self.cfInst.calls()[0].args[0])
-        eq_('/tmp/build_dir/some/path',
-            self.cfInst.calls()[0].args[1])
+        eq_('some/other/file.txt', self.cfInst.calls()[0].args[1])
 
+    def test_done_single_bp_then_app(self):
+        self.cfgInst.from_application('some/file.txt')
+        self.cfgInst.or_from_build_pack('default/file.txt')
+        self.cfgInst.to('some/other/file.txt')
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_(2, len(self.cfInst.calls()))
+        eq_('install_from_build_pack', self.cfInst.calls()[0].name)
+        eq_('install_from_application', self.cfInst.calls()[1].name)
+        assert 2 == len(self.cfInst.calls()[0].args)
+        eq_('default/file.txt', self.cfInst.calls()[0].args[0])
+        eq_('some/other/file.txt', self.cfInst.calls()[0].args[1])
+        assert 2 == len(self.cfInst.calls()[1].args)
+        eq_('some/file.txt', self.cfInst.calls()[1].args[0])
+        eq_('some/other/file.txt', self.cfInst.calls()[1].args[1])
+
+    def test_done_multi_bp(self):
+        self.cfgInst.all_files()
+        self.cfgInst.from_build_pack('defaults')
+        self.cfgInst.to('some/folder')
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_(2, len(self.cfInst.calls('install_from_build_pack')))
+        call = self.cfInst.calls('install_from_build_pack')[1]
+        eq_(2, len(call.args))
+        eq_('defaults/options.json', call.args[0])
+        eq_('some/folder/options.json', call.args[1])
+        call = self.cfInst.calls('install_from_build_pack')[0]
+        eq_(2, len(call.args))
+        eq_('defaults/junk.xml', call.args[0])
+        eq_('some/folder/junk.xml', call.args[1])
+
+    def test_done_multi_app(self):
+        self.cfgInst.all_files()
+        self.cfgInst.from_application('config')
+        self.cfgInst.to('some/folder')
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_(2, len(self.cfInst.calls('install_from_application')))
+        call = self.cfInst.calls('install_from_application')[1]
+        eq_(2, len(call.args))
+        eq_('config/options.json', call.args[0])
+        eq_('some/folder/options.json', call.args[1])
+        call = self.cfInst.calls('install_from_application')[0]
+        eq_(2, len(call.args))
+        eq_('config/junk.xml', call.args[0])
+        eq_('some/folder/junk.xml', call.args[1])
+
+    def test_done_multi_bp_then_app(self):
+        self.cfgInst.all_files()
+        self.cfgInst.from_application('config')
+        self.cfgInst.or_from_build_pack('defaults')
+        self.cfgInst.to('some/folder')
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_(2, len(self.cfInst.calls('install_from_build_pack')))
+        call = self.cfInst.calls('install_from_build_pack')[1]
+        eq_(2, len(call.args))
+        eq_('defaults/options.json', call.args[0])
+        eq_('some/folder/options.json', call.args[1])
+        call = self.cfInst.calls('install_from_build_pack')[0]
+        eq_(2, len(call.args))
+        eq_('defaults/junk.xml', call.args[0])
+        eq_('some/folder/junk.xml', call.args[1])
+        eq_(2, len(self.cfInst.calls('install_from_application')))
+        call = self.cfInst.calls('install_from_application')[1]
+        eq_(2, len(call.args))
+        eq_('config/options.json', call.args[0])
+        eq_('some/folder/options.json', call.args[1])
+        call = self.cfInst.calls('install_from_application')[0]
+        eq_(2, len(call.args))
+        eq_('config/junk.xml', call.args[0])
+        eq_('some/folder/junk.xml', call.args[1])
+        
 
 class TestExecutor(object):
     def test_method(self):

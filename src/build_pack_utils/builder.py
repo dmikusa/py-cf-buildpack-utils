@@ -135,27 +135,53 @@ class ConfigInstaller(object):
         self._installer = installer
         self._cfInst = installer._installer
         self._ctx = installer.builder._ctx
-        self._copy_method = self._cfInst.install_from_build_pack
-        self._fromFile = None
-        self._toPath = self._ctx['BUILD_DIR']
+        self._app_path = None
+        self._bp_path = None
+        self._to_path = None
+        self._all_files = False
 
     def from_build_pack(self, fromFile):
-        self._copy_method = self._cfInst.install_from_build_pack
-        self._fromFile = fromFile
+        self._bp_path = fromFile
+        return self
+
+    def or_from_build_pack(self, fromFile):
+        self._bp_path = fromFile
         return self
 
     def from_application(self, fromFile):
-        self._copy_method = self._cfInst.install_from_application
-        self._fromFile = fromFile
+        self._app_path = fromFile
         return self
 
     def to(self, toPath):
-        self._toPath = os.path.join(self._ctx['BUILD_DIR'], toPath)
+        self._to_path = toPath
+        return self
+
+    def all_files(self):
+        self._all_files = True
         return self
 
     def done(self):
-        if self._fromFile:
-            self._copy_method(self._fromFile, self._toPath)
+        if (self._bp_path or self._app_path) and self._to_path:
+            if not self._all_files:
+                if self._bp_path:
+                    self._cfInst.install_from_build_pack(self._bp_path,
+                                                         self._to_path)
+                if self._app_path:
+                    self._cfInst.install_from_application(self._app_path,
+                                                          self._to_path)
+            else:
+                if self._bp_path:
+                    root = os.path.join(self._ctx['BP_DIR'], self._bp_path)
+                    for item in os.listdir(root):
+                        fromFile = os.path.join(self._bp_path, item)
+                        toFile = os.path.join(self._to_path, item)
+                        self._cfInst.install_from_build_pack(fromFile, toFile)
+                if self._app_path:
+                    root = os.path.join(self._ctx['BUILD_DIR'], self._app_path)
+                    for item in os.listdir(root):
+                        fromFile = os.path.join(self._app_path, item)
+                        toFile = os.path.join(self._to_path, item)
+                        self._cfInst.install_from_application(fromFile, toFile)
         return self._installer
 
 

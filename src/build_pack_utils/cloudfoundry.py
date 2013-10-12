@@ -125,11 +125,12 @@ class CloudFoundryInstaller(object):
                           uses the bpFile path.
         """
         fullPathFrom = os.path.join(self._ctx['BP_DIR'], bpFile)
-        fullPathTo = os.path.join(
-            self._ctx['BUILD_DIR'],
-            ((toLocation is None) and bpFile or toLocation))
-        self._safe_makedirs(os.path.dirname(fullPathTo))
-        shutil.copy(fullPathFrom, fullPathTo)
+        if os.path.exists(fullPathFrom) and os.path.isfile(fullPathFrom):
+            fullPathTo = os.path.join(
+                self._ctx['BUILD_DIR'],
+                ((toLocation is None) and bpFile or toLocation))
+            self._safe_makedirs(os.path.dirname(fullPathTo))
+            shutil.copy(fullPathFrom, fullPathTo)
 
     def install_from_application(self, cfgFile, toLocation):
         """Copy file from one place to another in the application
@@ -142,6 +143,7 @@ class CloudFoundryInstaller(object):
                           relative to app droplet.
         """
         fullPathFrom = os.path.join(self._ctx['BUILD_DIR'], cfgFile)
-        fullPathTo = os.path.join(self._ctx['BUILD_DIR'], toLocation)
-        self._safe_makedirs(os.path.dirname(fullPathTo))
-        shutil.copy(fullPathFrom, fullPathTo)
+        if os.path.exists(fullPathFrom) and os.path.isfile(fullPathFrom):
+            fullPathTo = os.path.join(self._ctx['BUILD_DIR'], toLocation)
+            self._safe_makedirs(os.path.dirname(fullPathTo))
+            shutil.copy(fullPathFrom, fullPathTo)
