@@ -339,7 +339,12 @@ class FileUtil(object):
         return self
 
     def under(self, path):
-        self._from_path = path
+        if path in self._builder._ctx.keys():
+            self._from_path = self._builder._ctx[path]
+        elif not path.startswith('/'):
+            self._from_path = os.path.join(os.getcwd(), path)
+        else:
+            self._from_path = path
         return self
 
     def into(self, path):

@@ -407,16 +407,20 @@ class TestFileUtil(object):
 
     def test_under(self):
         fu = FileUtil(self.builder)
-        fu.under('./test/data')
-        assert fu._from_path == './test/data'
+        fu.under('/tmp/path')
+        eq_('/tmp/path', fu._from_path)
+        fu.under('BUILD_DIR')
+        eq_('/tmp/build_dir', fu._from_path)
+        fu.under('test/data')
+        eq_(os.path.join(os.getcwd(), 'test/data'), fu._from_path)
 
     def test_into(self):
         fu = FileUtil(self.builder)
         fu.into('BUILD_DIR')
         eq_('/tmp/build_dir', fu._into_path)
-        fu.under('./test/data')
+        fu.under('/tmp/data')
         fu.into('new')
-        eq_('./test/data/new', fu._into_path)
+        eq_('/tmp/data/new', fu._into_path)
         fu.into('/tmp/test')
         eq_('/tmp/test', fu._into_path)
 
