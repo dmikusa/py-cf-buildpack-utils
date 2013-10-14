@@ -357,8 +357,10 @@ class FileUtil(object):
         return self
 
     def _copy_or_move(self, src, dest):
-        if os.path.isfile(src) and not os.path.exists(dest):
-            os.makedirs(dest)
+        if os.path.isfile(src):
+            dest_base = os.path.dirname(dest)
+            if not os.path.exists(dest_base):
+                os.makedirs(os.path.dirname(dest))
         if not self._move:
             if os.path.isfile(src):
                 shutil.copy(src, dest)
