@@ -1,5 +1,7 @@
 import os
 import sys
+import shutil
+import re
 from subprocess import Popen
 from subprocess import PIPE
 from cloudfoundry import CloudFoundryUtil
@@ -297,6 +299,88 @@ class Executor(object):
         return self.builder
 
 
+class FileUtil(object):
+    def __init__(self, builder, move=False):
+        self._builder = builder
+        self._move = move
+        self._filters = []
+        self._from_path = None
+        self._into_path = None
+
+    def everything(self):
+        self._filters.append((lambda path: True))
+        return self
+
+    def all_files(self):
+        self._filters.append(
+            lambda path: os.path.isfile(path))
+        return self
+
+    def hidden(self):
+        self._filters.append(
+            lambda path: path.startswith('.'))
+        return self
+
+    def not_hidden(self):
+        self._filters.append(
+            lambda path: not path.startswith('.'))
+        return self
+
+    def all_folders(self):
+        self._filters.append(
+            lambda path: os.path.isdir(path))
+        return self
+
+    def where_name_matches(self, pattern):
+        if hasattr(pattern, 'strip'):
+            pattern = re.compile(pattern)
+        self._filters.append(
+            lambda path: (pattern.match(path) is not None))
+        return self
+
+    def under(self, path):
+        self._from_path = path
+        return self
+
+    def into(self, path):
+        if path in self._builder._ctx.keys():
+            self._into_path = self._builder._ctx[path]
+        elif not path.startswith('/'):
+            self._into_path = os.path.join(self._from_path, path)
+        else:
+            self._into_path = path
+        return self
+
+    def _copy_or_move(self, src, dest):
+        if os.path.isfile(src) and not os.path.exists(dest):
+            os.makedirs(dest)
+        if not self._move:
+            if os.path.isfile(src):
+                shutil.copy(src, dest)
+            else:
+                shutil.copytree(src, dest)
+        else:
+            shutil.move(src, dest)
+
+    def done(self):
+        if self._from_path and self._into_path:
+            if self._from_path == self._into_path:
+                raise ValueError("Source and destination paths "
+                                 "are the same [%s]" % self._from_path)
+            if not os.path.exists(self._from_path):
+                raise ValueError("Source path [%s] does not exist"
+                                 % self._from_path)
+            if os.path.exists(self._into_path):
+                raise ValueError("Destination path [%s] already exists"
+                                 % self._into_path)
+            for item in os.listdir(self._from_path):
+                if all([f(item) for f in self._filters]):
+                    self._copy_or_move(
+                        os.path.join(self._from_path, item),
+                        os.path.join(self._into_path, item))
+        return self._builder
+
+
 class StartScriptBuilder(object):
     def __init__(self, builder):
         self.builder = builder
@@ -440,6 +524,12 @@ class Builder(object):
 
     def detect(self):
         return Detecter(self)
+
+    def copy(self):
+        return FileUtil(self)
+
+    def move(self):
+        return FileUtil(self, move=True)
 
     def release(self):
         print 'default_process_types:'

@@ -2,6 +2,7 @@ import os
 import sys
 import stat
 import tempfile
+import shutil
 from StringIO import StringIO
 from nose.tools import eq_
 from nose.tools import raises
@@ -17,6 +18,7 @@ from build_pack_utils import EnvironmentVariableBuilder
 from build_pack_utils import Detecter
 from build_pack_utils import Builder
 from build_pack_utils import ConfigInstaller
+from build_pack_utils import FileUtil
 
 
 class TestConfigurer(object):
@@ -340,7 +342,7 @@ class TestConfigInstaller(object):
         eq_(2, len(call.args))
         eq_('config/junk.xml', call.args[0])
         eq_('some/folder/junk.xml', call.args[1])
-        
+
 
 class TestExecutor(object):
     def test_method(self):
@@ -350,6 +352,139 @@ class TestExecutor(object):
         res = ex.method(method)
         assert res is builder
         assert method.calls().once()
+
+
+class TestFileUtil(object):
+    def __init__(self):
+        self.builder = Dingus(_ctx={'BUILD_DIR': '/tmp/build_dir'})
+
+    def test_everything(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.everything()
+        eq_(1, len(fu._filters))
+        assert fu._filters[0]('always true')
+
+    def test_all_files(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.all_files()
+        eq_(1, len(fu._filters))
+        assert fu._filters[0]('./test/data/HASH')
+        assert not fu._filters[0]('./test/data/config')
+
+    def test_hidden(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.hidden()
+        eq_(1, len(fu._filters))
+        assert fu._filters[0]('.test')
+        assert not fu._filters[0]('config')
+
+    def test_not_hidden(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.not_hidden()
+        eq_(1, len(fu._filters))
+        assert not fu._filters[0]('.test')
+        assert fu._filters[0]('config')
+
+    def test_all_folders(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.all_folders()
+        eq_(1, len(fu._filters))
+        assert not fu._filters[0]('./test/data/HASH')
+        assert fu._filters[0]('./test/data/config')
+
+    def test_where_name_matches(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.where_name_matches('.*\.gz')
+        eq_(1, len(fu._filters))
+        assert fu._filters[0]('./test/data/HASH.gz')
+        assert not fu._filters[0]('./test/data/HASH.zip')
+
+    def test_under(self):
+        fu = FileUtil(self.builder)
+        fu.under('./test/data')
+        assert fu._from_path == './test/data'
+
+    def test_into(self):
+        fu = FileUtil(self.builder)
+        fu.into('BUILD_DIR')
+        eq_('/tmp/build_dir', fu._into_path)
+        fu.under('./test/data')
+        fu.into('new')
+        eq_('./test/data/new', fu._into_path)
+        fu.into('/tmp/test')
+        eq_('/tmp/test', fu._into_path)
+
+    def test_done_src_and_dest_match(self):
+        fu = FileUtil(self.builder)
+        fu.under('/tmp/data')
+        fu.into('/tmp/data')
+        try:
+            fu.done()
+            assert False
+        except ValueError, e:
+            eq_('Source and destination paths are the same [/tmp/data]',
+                e.args[0])
+
+    def test_done_src_does_not_exist(self):
+        fu = FileUtil(self.builder)
+        fu.under('/tmp/data')
+        fu.into('/tmp/new')
+        try:
+            fu.done()
+            assert False
+        except ValueError, e:
+            eq_('Source path [/tmp/data] does not exist',
+                e.args[0])
+
+    def test_done_dst_already_exists(self):
+        fu = FileUtil(self.builder)
+        fu.under('./test/data')
+        fu.into('/tmp')
+        try:
+            fu.done()
+            assert False
+        except ValueError, e:
+            eq_('Destination path [/tmp] already exists',
+                e.args[0])
+
+    def test_done_works_copy(self):
+        tmp = os.path.join(tempfile.gettempdir(), 'test_done_works')
+        try:
+            fu = FileUtil(self.builder)
+            fu.under('./test/data')
+            fu.into(tmp)
+            fu.done()
+            eq_(15, len(os.listdir(tmp)))
+            assert os.path.exists(tmp + '/config')
+            assert os.path.isdir(tmp + '/config')
+            eq_(2, len(os.listdir(tmp + '/config')))
+        finally:
+            shutil.rmtree(tmp)
+
+    def test_done_works_move(self):
+        tmp1 = os.path.join(tempfile.gettempdir(), 'test_done_works_1')
+        tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
+        try:
+            shutil.copytree('./test/data', tmp1)
+            eq_(15, len(os.listdir(tmp1)))
+            fu = FileUtil(self.builder, move=True)
+            fu.under(tmp1)
+            fu.into(tmp2)
+            fu.done()
+            eq_(0, len(os.listdir(tmp1)))
+            eq_(15, len(os.listdir(tmp2)))
+            assert os.path.exists(tmp2 + '/config')
+            assert os.path.isdir(tmp2 + '/config')
+            eq_(2, len(os.listdir(tmp2 + '/config')))
+        finally:
+            shutil.rmtree(tmp1)
+            shutil.rmtree(tmp2)
 
 
 class TestRunner(object):
