@@ -895,6 +895,14 @@ class TestEnvironmentVariableBuilder(object):
         assert res is self.ssb
         eq_('TEST=1234', self.ssb.calls()[0].args[0])
 
+    def test_from_context(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        res = evb.from_context('BUILD_DIR')
+        assert res is self.ssb
+        eq_('BUILD_DIR=$HOME', self.ssb.calls()[0].args[0])
+        res = evb.from_context('BP_DIR')
+        eq_('BP_DIR=/tmp/bp_dir', self.ssb.calls()[1].args[0])
+
 
 class TestBuilder(object):
     def test_release(self):

@@ -489,6 +489,19 @@ class EnvironmentVariableBuilder(object):
         self._name = name
         return self
 
+    def from_context(self, name):
+        builder = self._scriptBuilder.builder
+        if not name in builder._ctx.keys():
+            raise ValueError('[%s] is not in the context' % name)
+        value = builder._ctx[name]
+        value = value.replace(builder._ctx['BUILD_DIR'], '$HOME')
+        line = []
+        if self._export:
+            line.append('export')
+        line.append("%s=%s" % (name, value))
+        self._scriptBuilder.manual(' '.join(line))
+        return self._scriptBuilder
+
     def value(self, value):
         if not self._name:
             raise ValueError('You must specify a name')
