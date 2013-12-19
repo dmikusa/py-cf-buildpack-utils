@@ -1,7 +1,7 @@
 import urllib2
+import re
 from subprocess import Popen
 from subprocess import PIPE
-
 
 class Downloader(object):
 
@@ -14,11 +14,16 @@ class Downloader(object):
             f.write(res.read())
         print 'Downloaded [%s] to [%s]' % (url, toFile)
 
+    def download_direct(self, url):
+        return urllib2.urlopen(url).read()
+
 
 class CurlDownloader(object):
 
     def __init__(self, config):
         self._ctx = config
+        self._status_pattern = re.compile(r'^(.*)<!-- Status: (\d+) -->$',
+                                          re.DOTALL)
 
     def download(self, url, toFile):
         proc = Popen(["curl", "-s",
@@ -32,3 +37,17 @@ class CurlDownloader(object):
                  output.startswith('5')):
             raise RuntimeError("curl says [%s]" % output)
         print 'Downloaded [%s] to [%s]' % (url, toFile)
+    
+    def download_direct(self, url):
+        proc = Popen(["curl", "-s",
+                      "-w", '<!-- Status: %{http_code} -->',
+                      url], stdout=PIPE)
+        output, unused_err = proc.communicate()
+        proc.poll()
+        m = self._status_pattern.match(output)
+        if m:
+            resp = m.group(1)
+            code = m.group(2)
+            if (code.startswith('4') or code.startswith('5')):
+                raise RuntimeError("curl says [%s]" % output)
+            return resp
