@@ -912,12 +912,16 @@ class TestBuilder(object):
     def test_release(self):
         old_sysout = sys.stdout
         new_sysout = StringIO()
+        old_sysargv = sys.argv
+        new_sysargv = ['/tmp/build', '/tmp/bp_dir']
         try:
+            sys.argv = new_sysargv
             sys.stdout = new_sysout
             b = Builder()
             b.configure()
             b.release()
         finally:
+            sys.argv = old_sysargv
             sys.stdout = old_sysout
         lines = new_sysout.getvalue().split('\n')
         assert 3 == len(lines)
@@ -927,13 +931,17 @@ class TestBuilder(object):
     def test_release_custom_script(self):
         old_sysout = sys.stdout
         new_sysout = StringIO()
+        old_sysargv = sys.argv
+        new_sysargv = ['/tmp/build', '/tmp/bp_dir']
         try:
+            sys.argv = new_sysargv
             sys.stdout = new_sysout
             b = Builder()
             b.configure()
             b._ctx['START_SCRIPT_NAME'] = '$HOME/my-start-script.sh'
             b.release()
         finally:
+            sys.argv = old_sysargv
             sys.stdout = old_sysout
         lines = new_sysout.getvalue().split('\n')
         assert 3 == len(lines)
