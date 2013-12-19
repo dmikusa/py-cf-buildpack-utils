@@ -689,6 +689,29 @@ class TestStartScriptBuilder(object):
             if expectedFile and os.path.exists(expectedFile):
                 os.remove(expectedFile)
 
+    def test_wait_forever(self):
+        b = StartScriptBuilder(self.builder)
+        b.manual('ls -la')
+        b.manual('echo Hello World')
+        b.manual('X=1234')
+        expectedFile = None
+        try:
+            b.write(wait_forever=True)
+            expectedFile = os.path.join(tempfile.gettempdir(),
+                                        'start.sh')
+            assert os.path.exists(expectedFile)
+            eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
+            data = open(expectedFile, 'rt').read()
+            assert data.find('ls -la') >= 0
+            assert data.find('echo') >= 0
+            assert data.find('1234') >= 0
+            assert data.find('while') >= 0
+            assert data.find('sleep') >= 0
+            assert data.find('done') >= 0
+        finally:
+            if expectedFile and os.path.exists(expectedFile):
+                os.remove(expectedFile)
+
     def test_fancy_1(self):
         ssb = (StartScriptBuilder(self.builder)
                    .environment_variable()

@@ -402,11 +402,15 @@ class StartScriptBuilder(object):
     def command(self):
         return ScriptCommandBuilder(self.builder, self)
 
-    def write(self):
+    def write(self, wait_forever=False):
         scriptName = self.builder._ctx.get('START_SCRIPT_NAME',
                                            'start.sh')
         startScriptPath = os.path.join(
             self.builder._ctx['BUILD_DIR'], scriptName)
+        if wait_forever:
+            self.content.append("while [ 1 -eq 1 ]; do")
+            self.content.append("    sleep 100000")
+            self.content.append("done")
         with open(startScriptPath, 'wt') as out:
             out.write('\n'.join(self.content))
         os.chmod(startScriptPath, 0755)
