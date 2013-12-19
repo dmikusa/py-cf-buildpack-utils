@@ -87,6 +87,19 @@ class CloudFoundryInstaller(object):
             if e.errno != 17:
                 raise e
 
+    def install_binary_direct(self, url, hashUrl, installDir, strip=False):
+        fileName = url.split('/')[-1]
+        digest = self._dwn.download_direct(hashUrl)
+        fileToInstall = self._dcm.get(fileName, digest)
+        if fileToInstall is None:
+            fileToInstall = os.path.join(self._ctx['TEMP_DIR'], fileName)
+            self._dwn.download(url, fileToInstall)
+            digest = self._hashUtil.calculate_hash(fileToInstall)
+            fileToInstall = self._dcm.put(fileName, fileToInstall, digest)
+        return self._unzipUtil.extract(fileToInstall,
+                                       installDir,
+                                       strip)
+
     def install_binary(self, installKey):
         fileName = self._ctx['%s_PACKAGE' % installKey]
         digest = self._ctx['%s_PACKAGE_HASH' % installKey]
