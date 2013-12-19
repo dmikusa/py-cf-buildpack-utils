@@ -19,9 +19,16 @@ class TestCloudFoundryInstaller(object):
         sys.argv = [sys.argv[0], self.buildDir, self.cacheDir]
         # setup tests
         self.ctx = CloudFoundryUtil.initialize()
-        self.ctx.update(
-            CloudFoundryUtil.load_json_config_file(
-                '/Users/danielmikusa/Code/Python/CfMavenBuildPack/defaults/options.json'))
+        self.ctx.update({
+            "CACHE_HASH_ALGORITHM": "sha1",
+            "MAVEN_DOWNLOAD_PREFIX": 
+                "http://apache.osuosl.org/maven/maven-3/3.1.1/binaries/",
+            "MAVEN_PACKAGE": "apache-maven-3.1.1-bin.tar.gz",
+            "MAVEN_PACKAGE_HASH": "630eea2107b0742acb315b214009ba08602dda5f",
+            "MAVEN_STRIP": True,
+            "MAVEN_BUILD_COMMAND": "test",
+            "MAVEN_RUN_COMMAND": "tomcat7:run"
+        })
         assert [] == os.listdir(self.buildDir)
         # uncomment to enforce cache is cleared every time
         #assert [] == os.listdir(self.cacheDir)
