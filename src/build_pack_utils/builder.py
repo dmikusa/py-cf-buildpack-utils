@@ -140,7 +140,6 @@ class ConfigInstaller(object):
         self._app_path = None
         self._bp_path = None
         self._to_path = None
-        self._all_files = False
 
     def from_build_pack(self, fromFile):
         self._bp_path = fromFile
@@ -158,34 +157,14 @@ class ConfigInstaller(object):
         self._to_path = toPath
         return self
 
-    def all_files(self):
-        self._all_files = True
-        return self
-
     def done(self):
         if (self._bp_path or self._app_path) and self._to_path:
-            if not self._all_files:
-                if self._bp_path:
-                    self._cfInst.install_from_build_pack(self._bp_path,
-                                                         self._to_path)
-                if self._app_path:
-                    self._cfInst.install_from_application(self._app_path,
-                                                          self._to_path)
-            else:
-                if self._bp_path:
-                    root = os.path.join(self._ctx['BP_DIR'], self._bp_path)
-                    for item in os.listdir(root):
-                        fromFile = os.path.join(self._bp_path, item)
-                        toFile = os.path.join(self._to_path, item)
-                        self._cfInst.install_from_build_pack(fromFile, toFile)
-                if self._app_path:
-                    root = os.path.join(self._ctx['BUILD_DIR'], self._app_path)
-                    if os.path.exists(root) and os.path.isdir(root):
-                        for item in os.listdir(root):
-                            fromFile = os.path.join(self._app_path, item)
-                            toFile = os.path.join(self._to_path, item)
-                            self._cfInst.install_from_application(fromFile,
-                                                                  toFile)
+            if self._bp_path:
+                self._cfInst.install_from_build_pack(self._bp_path,
+                                                     self._to_path)
+            if self._app_path:
+                self._cfInst.install_from_application(self._app_path,
+                                                      self._to_path)
         return self._installer
 
 

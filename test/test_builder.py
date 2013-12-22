@@ -230,12 +230,6 @@ class TestConfigInstaller(object):
         assert res is self.cfgInst
         eq_('some/other/file.txt', self.cfgInst._to_path)
 
-    def test_all_files(self):
-        assert not self.cfgInst._all_files
-        res = self.cfgInst.all_files()
-        assert res is self.cfgInst
-        assert self.cfgInst._all_files
-
     def test_done_nothing(self):
         res = self.cfgInst.done()
         assert res is self.inst
@@ -286,62 +280,59 @@ class TestConfigInstaller(object):
         eq_('some/other/file.txt', self.cfInst.calls()[1].args[1])
 
     def test_done_multi_bp(self):
-        self.cfgInst.all_files()
         self.cfgInst.from_build_pack('defaults')
         self.cfgInst.to('some/folder')
         res = self.cfgInst.done()
         assert res is self.inst
-        eq_(2, len(self.cfInst.calls('install_from_build_pack')))
-        call = self.cfInst.calls('install_from_build_pack')[1]
-        eq_(2, len(call.args))
-        eq_('defaults/options.json', call.args[0])
-        eq_('some/folder/options.json', call.args[1])
+        eq_(1, len(self.cfInst.calls('install_from_build_pack')))
         call = self.cfInst.calls('install_from_build_pack')[0]
         eq_(2, len(call.args))
-        eq_('defaults/junk.xml', call.args[0])
-        eq_('some/folder/junk.xml', call.args[1])
+        eq_('defaults', call.args[0])
+        eq_('some/folder', call.args[1])
+        call = self.cfInst.calls('install_from_build_pack')[0]
+        eq_(2, len(call.args))
+        eq_('defaults', call.args[0])
+        eq_('some/folder', call.args[1])
 
     def test_done_multi_app(self):
-        self.cfgInst.all_files()
         self.cfgInst.from_application('config')
         self.cfgInst.to('some/folder')
         res = self.cfgInst.done()
         assert res is self.inst
-        eq_(2, len(self.cfInst.calls('install_from_application')))
-        call = self.cfInst.calls('install_from_application')[1]
-        eq_(2, len(call.args))
-        eq_('config/options.json', call.args[0])
-        eq_('some/folder/options.json', call.args[1])
+        eq_(1, len(self.cfInst.calls('install_from_application')))
         call = self.cfInst.calls('install_from_application')[0]
         eq_(2, len(call.args))
-        eq_('config/junk.xml', call.args[0])
-        eq_('some/folder/junk.xml', call.args[1])
+        eq_('config', call.args[0])
+        eq_('some/folder', call.args[1])
+        call = self.cfInst.calls('install_from_application')[0]
+        eq_(2, len(call.args))
+        eq_('config', call.args[0])
+        eq_('some/folder', call.args[1])
 
     def test_done_multi_bp_then_app(self):
-        self.cfgInst.all_files()
         self.cfgInst.from_application('config')
         self.cfgInst.or_from_build_pack('defaults')
         self.cfgInst.to('some/folder')
         res = self.cfgInst.done()
         assert res is self.inst
-        eq_(2, len(self.cfInst.calls('install_from_build_pack')))
-        call = self.cfInst.calls('install_from_build_pack')[1]
-        eq_(2, len(call.args))
-        eq_('defaults/options.json', call.args[0])
-        eq_('some/folder/options.json', call.args[1])
+        eq_(1, len(self.cfInst.calls('install_from_build_pack')))
         call = self.cfInst.calls('install_from_build_pack')[0]
         eq_(2, len(call.args))
-        eq_('defaults/junk.xml', call.args[0])
-        eq_('some/folder/junk.xml', call.args[1])
-        eq_(2, len(self.cfInst.calls('install_from_application')))
-        call = self.cfInst.calls('install_from_application')[1]
+        eq_('defaults', call.args[0])
+        eq_('some/folder', call.args[1])
+        call = self.cfInst.calls('install_from_build_pack')[0]
         eq_(2, len(call.args))
-        eq_('config/options.json', call.args[0])
-        eq_('some/folder/options.json', call.args[1])
+        eq_('defaults', call.args[0])
+        eq_('some/folder', call.args[1])
+        eq_(1, len(self.cfInst.calls('install_from_application')))
         call = self.cfInst.calls('install_from_application')[0]
         eq_(2, len(call.args))
-        eq_('config/junk.xml', call.args[0])
-        eq_('some/folder/junk.xml', call.args[1])
+        eq_('config', call.args[0])
+        eq_('some/folder', call.args[1])
+        call = self.cfInst.calls('install_from_application')[0]
+        eq_(2, len(call.args))
+        eq_('config', call.args[0])
+        eq_('some/folder', call.args[1])
 
 
 class TestExecutor(object):

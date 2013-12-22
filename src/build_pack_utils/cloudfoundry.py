@@ -127,36 +127,68 @@ class CloudFoundryInstaller(object):
                                        installIntoDir,
                                        self._ctx.get(stripKey, False))
 
-    def install_from_build_pack(self, bpFile, toLocation=None):
-        """Copy file from the build pack to the droplet
+    def _install_from(self, fromPath, fromLoc, toLocation=None, ignore=None):
+        """Copy file or directory from a location to the droplet
 
-        Copies a file from the build pack to the application droplet.
+        Copies a file or directory from a location to the application 
+        droplet. Directories are copied recursively, but specific files
+        in those directories can be ignored by specifing the ignore parameter. 
 
-            bpFile     -> file to copy, relative build pack
+            fromPath   -> file to copy, relative build pack
+            fromLoc    -> root of the from path.  Full path to file or
+                          directory to be copied is fromLoc + fromPath
             toLocation -> optional location where to copy the file
                           relative to app droplet.  If not specified
-                          uses the bpFile path.
+                          uses fromPath.
+            ignore     -> an optional callable that is passed to
+                          the ignore argument of shutil.copytree.
         """
-        fullPathFrom = os.path.join(self._ctx['BP_DIR'], bpFile)
-        if os.path.exists(fullPathFrom) and os.path.isfile(fullPathFrom):
+        fullPathFrom = os.path.join(fromLoc, fromPath)
+        if os.path.exists(fullPathFrom):
             fullPathTo = os.path.join(
                 self._ctx['BUILD_DIR'],
-                ((toLocation is None) and bpFile or toLocation))
+                ((toLocation is None) and fromPath or toLocation))
             self._safe_makedirs(os.path.dirname(fullPathTo))
-            shutil.copy(fullPathFrom, fullPathTo)
+            if os.path.isfile(fullPathFrom):
+                shutil.copy(fullPathFrom, fullPathTo)
+            else:
+                shutil.copytree(fullPathFrom, fullPathTo, ignore=ignore)
 
-    def install_from_application(self, cfgFile, toLocation):
-        """Copy file from one place to another in the application
+    def install_from_build_pack(self, fromPath, toLocation=None, ignore=None):
+        """Copy file or directory from the build pack to the droplet
 
-        Copies a file from one place to another place within the
+        Copies a file or directory from the build pack to the application 
+        droplet. Directories are copied recursively, but specific files
+        in those directories can be ignored by specifing the ignore parameter. 
+
+            fromPath   -> file to copy, relative build pack
+            toLocation -> optional location where to copy the file
+                          relative to app droplet.  If not specified
+                          uses fromPath.
+            ignore     -> an optional callable that is passed to
+                          the ignore argument of shutil.copytree.
+        """
+        self._install_from(
+            fromPath,
+            self._ctx['BP_DIR'],
+            toLocation,
+            ignore)
+
+    def install_from_application(self, fromPath, toLocation, ignore=None):
+        """Copy file or directory from one place to another in the application
+
+        Copies a file or directory from one place to another place within the
         application droplet.
 
-            cfgFile    -> file to copy, relative build pack
+            fromPath   -> file or directory to copy, relative 
+                          to application droplet.
             toLocation -> location where to copy the file,
                           relative to app droplet.
+            ignore     -> optional callable that is passed to the
+                          ignore argument of shutil.copytree
         """
-        fullPathFrom = os.path.join(self._ctx['BUILD_DIR'], cfgFile)
-        if os.path.exists(fullPathFrom) and os.path.isfile(fullPathFrom):
-            fullPathTo = os.path.join(self._ctx['BUILD_DIR'], toLocation)
-            self._safe_makedirs(os.path.dirname(fullPathTo))
-            shutil.copy(fullPathFrom, fullPathTo)
+        self._install_from(
+            fromPath,
+            self._ctx['BUILD_DIR'],
+            toLocation,
+            ignore)
