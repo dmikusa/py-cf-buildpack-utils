@@ -515,9 +515,6 @@ class ExtensionManager(object):
     def using_branch(self, branch):
         self._bp._branch = branch
 
-    def with_plugin(self):
-        pass
-
     def done(self):
         if self._bp:
             self._bp._clone()
