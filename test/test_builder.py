@@ -19,6 +19,7 @@ from build_pack_utils import Detecter
 from build_pack_utils import Builder
 from build_pack_utils import ConfigInstaller
 from build_pack_utils import FileUtil
+from build_pack_utils import ExtensionManager
 
 
 class TestConfigurer(object):
@@ -962,3 +963,28 @@ class TestBuilder(object):
         eq_('default_process_types:', lines[0])
         eq_('  web: $HOME/my-start-script.sh', lines[1])
         eq_('', lines[2])
+
+
+class TestExtensionManager(object):
+    def __init__(self):
+        self.ctx = {
+            'BUILD_DIR': '/tmp/build_dir',
+            'BP_DIR': '/tmp/bp_dir',
+            'CACHE_DIR': '/tmp/cache_dir'
+        }
+        self.builder = Dingus(_ctx=self.ctx)
+
+    def test_with_buildpack(self):
+        em = ExtensionManager(self.builder)
+        em.with_buildpack('https://github.com/dmikusa-pivotal/cf-test-buildpack')
+        em.using_branch(None)
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            em.done()
+        finally:
+            sys.stdout = old_sysout
+        output = new_sysout.getvalue()
+        eq_(681, output.find('Listing Environment:'))
+        eq_(3780, output.find('CPU Info'))

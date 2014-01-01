@@ -11,6 +11,7 @@ from detecter import RegexFileSearch
 from detecter import StartsWithFileSearch
 from detecter import EndsWithFileSearch
 from detecter import ContainsFileSearch
+from runner import BuildPack
 
 
 class Configurer(object):
@@ -504,6 +505,25 @@ class EnvironmentVariableBuilder(object):
         return self._scriptBuilder
 
 
+class ExtensionManager(object):
+    def __init__(self, builder):
+        self._builder = builder
+
+    def with_buildpack(self, url):
+        self._bp = BuildPack(self._builder._ctx, url)
+
+    def using_branch(self, branch):
+        self._bp._branch = branch
+
+    def with_plugin(self):
+        pass
+
+    def done(self):
+        if self._bp:
+            self._bp._clone()
+            print self._bp._compile()
+
+
 class Builder(object):
     def __init__(self):
         self._installer = None
@@ -521,6 +541,9 @@ class Builder(object):
 
     def execute(self):
         return Executor(self)
+
+    def extend(self):
+        return ExtensionManager(self)
 
     def create_start_script(self):
         return StartScriptBuilder(self)
