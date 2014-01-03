@@ -129,6 +129,10 @@ class Installer(object):
     def config(self):
         return ConfigInstaller(self)
 
+
+    def build_pack(self):
+        return BuildPackManager(self)
+
     def done(self):
         return self.builder
 
@@ -505,20 +509,23 @@ class EnvironmentVariableBuilder(object):
         return self._scriptBuilder
 
 
-class ExtensionManager(object):
+class BuildPackManager(object):
     def __init__(self, builder):
         self._builder = builder
 
-    def with_buildpack(self, url):
+    def from_buildpack(self, url):
         self._bp = BuildPack(self._builder._ctx, url)
+        return self
 
     def using_branch(self, branch):
         self._bp._branch = branch
+        return self
 
     def done(self):
         if self._bp:
             self._bp._clone()
             print self._bp._compile()
+        return self._builder
 
 
 class Builder(object):
@@ -538,9 +545,6 @@ class Builder(object):
 
     def execute(self):
         return Executor(self)
-
-    def extend(self):
-        return ExtensionManager(self)
 
     def create_start_script(self):
         return StartScriptBuilder(self)

@@ -19,7 +19,7 @@ from build_pack_utils import Detecter
 from build_pack_utils import Builder
 from build_pack_utils import ConfigInstaller
 from build_pack_utils import FileUtil
-from build_pack_utils import ExtensionManager
+from build_pack_utils import BuildPackManager
 
 
 class TestConfigurer(object):
@@ -965,7 +965,7 @@ class TestBuilder(object):
         eq_('', lines[2])
 
 
-class TestExtensionManager(object):
+class TestBuildPackManager(object):
     def __init__(self):
         self.ctx = {
             'BUILD_DIR': '/tmp/build_dir',
@@ -974,9 +974,9 @@ class TestExtensionManager(object):
         }
         self.builder = Dingus(_ctx=self.ctx)
 
-    def test_with_buildpack(self):
-        em = ExtensionManager(self.builder)
-        em.with_buildpack('https://github.com/dmikusa-pivotal/cf-test-buildpack')
+    def test_from_buildpack(self):
+        em = BuildPackManager(self.builder)
+        em.from_buildpack('https://github.com/dmikusa-pivotal/cf-test-buildpack')
         em.using_branch(None)
         old_sysout = sys.stdout
         new_sysout = StringIO()
