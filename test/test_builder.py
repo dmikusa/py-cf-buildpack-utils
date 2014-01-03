@@ -20,6 +20,7 @@ from build_pack_utils import Builder
 from build_pack_utils import ConfigInstaller
 from build_pack_utils import FileUtil
 from build_pack_utils import BuildPackManager
+from build_pack_utils import ExtensionInstaller
 
 
 class TestConfigurer(object):
@@ -988,3 +989,52 @@ class TestBuildPackManager(object):
         output = new_sysout.getvalue()
         eq_(681, output.find('Listing Environment:'))
         eq_(3780, output.find('CPU Info'))
+
+
+class TestExtensionInstaller(object):
+    def __init__(self):
+        self.ctx = {
+            'BUILD_DIR': '/tmp/build_dir',
+            'BP_DIR': '/tmp/bp_dir',
+            'CACHE_DIR': '/tmp/cache_dir'
+        }
+        self.builder = Dingus(_ctx=self.ctx)
+        self.inst = Dingus(builder=self.builder)
+
+    def test_load_extension(self):
+        ei = ExtensionInstaller(self.inst)
+        test1 = ei._load_extension('test/data/plugins/test1')
+        eq_(0, test1.compile(self.inst))
+        test2 = ei._load_extension('test/data/plugins/test2')
+        eq_(-1, test2.compile(self.inst))
+
+    def test_from_location(self):
+        ei = ExtensionInstaller(self.inst)
+        ei.from_location('test/data/plugins/test1')
+        ei.ignore_errors(False)
+        ei.done()
+
+    def test_from_directory(self):
+        ei = ExtensionInstaller(self.inst)
+        ei.from_directory('test/data/plugins')
+        ei.done()
+
+    def test_fails_retcode(self):
+        ei = ExtensionInstaller(self.inst)
+        ei.from_location('test/data/plugins/test2')
+        ei.ignore_errors(False)
+        try:
+            ei.done()
+            assert False, "should not reach this code"
+        except RuntimeError, e:
+            eq_('Extension Failed with [-1]', str(e))
+
+    def test_fails_exception(self):
+        ei = ExtensionInstaller(self.inst)
+        ei.from_location('test/data/plugins/test3')
+        ei.ignore_errors(False)
+        try:
+            ei.done()
+            assert False, "should not reach this code"
+        except ValueError, e:
+            eq_('Intentional', str(e))

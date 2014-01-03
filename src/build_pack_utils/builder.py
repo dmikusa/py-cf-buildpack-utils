@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import re
+import imp
 from subprocess import Popen
 from subprocess import PIPE
 from cloudfoundry import CloudFoundryUtil
@@ -129,12 +130,55 @@ class Installer(object):
     def config(self):
         return ConfigInstaller(self)
 
+    def extension(self):
+        return ExtensionInstaller(self)
+
+    def extensions(self):
+        return ExtensionInstaller(self)
 
     def build_pack(self):
         return BuildPackManager(self)
 
     def done(self):
         return self.builder
+
+
+class ExtensionInstaller(object):
+    def __init__(self, installer):
+        self._installer = installer
+        self._paths = []
+        self._ignore = True
+
+    def from_location(self, path):
+        self._paths.append(os.path.abspath(path))
+        return self
+
+    def from_directory(self, directory):
+        for path in os.listdir(directory):
+            self._paths.append(os.path.abspath(os.path.join(directory,
+                                                            path)))
+        return self
+
+    def ignore_errors(self, ignore):
+        self._ignore = ignore
+        return self
+
+    def _load_extension(self, path):
+        info = imp.find_module('extension', [path])
+        return imp.load_module('extension', *info)
+
+    def done(self):
+        for path in self._paths:
+            extn = self._load_extension(path)
+            try:
+                retcode = extn.compile(self._installer)
+                if retcode != 0:
+                    raise RuntimeError('Extension Failed with [%s]' % retcode)
+            except Exception, e:
+                print "Extension Error [%s]" % str(e)
+                if not self._ignore:
+                    raise e
+        return self._installer
 
 
 class ConfigInstaller(object):
