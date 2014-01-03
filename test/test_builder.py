@@ -457,7 +457,7 @@ class TestFileUtil(object):
             fu.under('./test/data')
             fu.into(tmp)
             fu.done()
-            eq_(15, len(os.listdir(tmp)))
+            eq_(17, len(os.listdir(tmp)))
             assert os.path.exists(tmp + '/HASH')
             assert os.path.isfile(tmp + '/HASH')
             assert os.path.exists(tmp + '/config')
@@ -471,21 +471,23 @@ class TestFileUtil(object):
         tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
         try:
             shutil.copytree('./test/data', tmp1)
-            eq_(15, len(os.listdir(tmp1)))
+            eq_(17, len(os.listdir(tmp1)))
             fu = FileUtil(self.builder, move=True)
             fu.under(tmp1)
             fu.into(tmp2)
             fu.done()
             eq_(0, len(os.listdir(tmp1)))
-            eq_(15, len(os.listdir(tmp2)))
+            eq_(17, len(os.listdir(tmp2)))
             assert os.path.exists(tmp2 + '/HASH')
             assert os.path.isfile(tmp2 + '/HASH')
             assert os.path.exists(tmp2 + '/config')
             assert os.path.isdir(tmp2 + '/config')
             eq_(2, len(os.listdir(tmp2 + '/config')))
         finally:
-            shutil.rmtree(tmp1)
-            shutil.rmtree(tmp2)
+            if os.path.exists(tmp1):
+                shutil.rmtree(tmp1)
+            if os.path.exists(tmp2):
+                shutil.rmtree(tmp2)
 
 
 class TestRunner(object):
@@ -986,9 +988,11 @@ class TestBuildPackManager(object):
             em.done()
         finally:
             sys.stdout = old_sysout
+            if os.path.exists(em._bp.bp_dir):
+                shutil.rmtree(em._bp.bp_dir)
         output = new_sysout.getvalue()
-        eq_(681, output.find('Listing Environment:'))
-        eq_(3780, output.find('CPU Info'))
+        eq_(True, output.find('Listing Environment:') > -1)
+        eq_(True, output.find('CPU Info') > -1)
 
 
 class TestExtensionInstaller(object):

@@ -62,7 +62,7 @@ class TestRunner(object):
         output = self.bp._compile()
         eq_(True, output.startswith('Running cache test...'))
         eq_(859, output.find('Listing Environment:'))
-        eq_(4012, output.find('CPU Info'))
+        eq_(3993, output.find('CPU Info'))
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_release(self):
