@@ -72,7 +72,6 @@ class BuildPack(object):
 
     def _clone(self):
         subprocess.call(['git', 'clone', self._url, self.bp_dir])
-        os.chdir(self.bp_dir)
         if self._branch:
             subprocess.call(['git', 'checkout', self._branch])
 
