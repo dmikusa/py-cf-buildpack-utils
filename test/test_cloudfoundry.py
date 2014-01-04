@@ -38,7 +38,7 @@ class TestCloudFoundryUtil(object):
         ctx = CloudFoundryUtil.initialize()
         assert '/tmp/staged/app' == ctx['BUILD_DIR']
         assert '/tmp/cache' == ctx['CACHE_DIR']
-        assert '/tmp' == ctx['TEMP_DIR']
+        assert '/tmp' == ctx['TMPDIR']
         assert '/tmp/buildpacks/my-buildpack' == ctx['BP_DIR']
         assert '64m' == ctx['MEMORY_LIMIT']
         assert os.path.exists(ctx['BUILD_DIR'])
@@ -83,7 +83,7 @@ class TestCloudFoundryInstallerBinaries(object):
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir',
+            'TMPDIR': '/tmp/temp_dir',
             'DOWNLOAD_METHOD': 'python'
         })
         eq_(Downloader, type(installer._dwn))
@@ -93,7 +93,7 @@ class TestCloudFoundryInstallerBinaries(object):
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir',
+            'TMPDIR': '/tmp/temp_dir',
             'DOWNLOAD_METHOD': 'curl'
         })
         eq_(CurlDownloader, type(installer._dwn))
@@ -103,7 +103,7 @@ class TestCloudFoundryInstallerBinaries(object):
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir',
+            'TMPDIR': '/tmp/temp_dir',
             'DOWNLOAD_METHOD': 'custom',
             'DOWNLOAD_CLASS': 'test_cloudfoundry.CustomDownloader'
         })
@@ -115,7 +115,7 @@ class TestCloudFoundryInstallerBinaries(object):
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir',
+            'TMPDIR': '/tmp/temp_dir',
             'DOWNLOAD_METHOD': 'custom',
             'DOWNLOAD_CLASS': 'test_cloudfoundry.CustomDownloade'
         })
@@ -127,7 +127,7 @@ class TestCloudFoundryInstallerBinaries(object):
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir',
+            'TMPDIR': '/tmp/temp_dir',
             'LOCAL_PACKAGE': 'tomcat.tar.gz',
             'LOCAL_PACKAGE_HASH': '1234WXYZ',
             'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
@@ -168,7 +168,7 @@ class TestCloudFoundryInstallerBinaries(object):
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir'
+            'TMPDIR': '/tmp/temp_dir'
         })
         installer._unzipUtil = Dingus('unzip',
                                       extract__returns='/tmp/packages/tomcat')
@@ -209,7 +209,7 @@ class TestCloudFoundryInstallerBinaries(object):
         installer = CloudFoundryInstaller({
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir',
+            'TMPDIR': '/tmp/temp_dir',
             'LOCAL_PACKAGE': 'tomcat.tar.gz',
             'LOCAL_PACKAGE_HASH': '1234WXYZ',
             'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
@@ -240,7 +240,7 @@ class TestCloudFoundryInstallerBinaries(object):
         installer = CloudFoundryInstaller({
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'TEMP_DIR': '/tmp/temp_dir'
+            'TMPDIR': '/tmp/temp_dir'
         })
         installer._unzipUtil = Dingus('unzip',
                                       extract__returns='/tmp/build_dir/tomcat')

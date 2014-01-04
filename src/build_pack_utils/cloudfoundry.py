@@ -17,6 +17,8 @@ class CloudFoundryUtil(object):
         if hasattr(sys.stdout, 'fileno'):
             sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
         ctx = {}
+        # Add environment variables
+        ctx.update(os.environ)
         # Build Pack Location
         ctx['BP_DIR'] = os.path.dirname(os.path.dirname(sys.argv[0]))
         # User's Application Files, build droplet here
@@ -24,10 +26,8 @@ class CloudFoundryUtil(object):
         # Cache space for the build pack
         ctx['CACHE_DIR'] = (len(sys.argv) == 3) and sys.argv[2] or None
         # Temp space
-        ctx['TEMP_DIR'] = os.environ.get('TMPDIR', tempfile.gettempdir())
-        tempfile.tempdir = ctx['TEMP_DIR']
-        # Memory Limit
-        ctx['MEMORY_LIMIT'] = os.environ.get('MEMORY_LIMIT', None)
+        if 'TMPDIR' not in ctx.keys():
+            ctx['TMPDIR'] = tempfile.gettempdir()
         # Make sure cache & build directories exist
         if not os.path.exists(ctx['BUILD_DIR']):
             os.makedirs(ctx['BUILD_DIR'])
@@ -92,7 +92,7 @@ class CloudFoundryInstaller(object):
         digest = self._dwn.download_direct(hashUrl)
         fileToInstall = self._dcm.get(fileName, digest)
         if fileToInstall is None:
-            fileToInstall = os.path.join(self._ctx['TEMP_DIR'], fileName)
+            fileToInstall = os.path.join(self._ctx['TMPDIR'], fileName)
             self._dwn.download(url, fileToInstall)
             digest = self._hashUtil.calculate_hash(fileToInstall)
             fileToInstall = self._dcm.put(fileName, fileToInstall, digest)
@@ -108,7 +108,7 @@ class CloudFoundryInstaller(object):
         # download based on ctx settings
         fileToInstall = self._dcm.get(fileName, digest)
         if fileToInstall is None:
-            fileToInstall = os.path.join(self._ctx['TEMP_DIR'], fileName)
+            fileToInstall = os.path.join(self._ctx['TMPDIR'], fileName)
             self._dwn.download(
                 os.path.join(self._ctx['%s_DOWNLOAD_PREFIX' % installKey],
                              fileName),

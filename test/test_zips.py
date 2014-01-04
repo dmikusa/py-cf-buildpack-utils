@@ -35,7 +35,7 @@ class TestUnzipUtil(object):
             shutil.rmtree(self._dir)
 
     def run_method(self, method, path):
-        uzUtil = UnzipUtil({'TEMP_DIR': tempfile.gettempdir()})
+        uzUtil = UnzipUtil({'TMPDIR': tempfile.gettempdir()})
         path = os.path.abspath(path)
         outPath = getattr(uzUtil, method)(path, self._dir, 0)
         assert len(outPath) > 0
@@ -49,7 +49,7 @@ class TestUnzipUtil(object):
         assert self._hash == self._hshUtil.calculate_hash(self._path)
 
     def run_method_strip(self, method, path):
-        uzUtil = UnzipUtil({'TEMP_DIR': tempfile.gettempdir()})
+        uzUtil = UnzipUtil({'TMPDIR': tempfile.gettempdir()})
         path = os.path.abspath(path)
         outPath = getattr(uzUtil, method)(path, self._dir, 1)
         assert len(outPath) > 0
