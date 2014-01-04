@@ -15,6 +15,18 @@ from detecter import ContainsFileSearch
 from runner import BuildPack
 
 
+def log_output(cmd, retcode, stdout, stderr):
+    print 'Comand %s completed with [%d]' % (str(cmd), retcode)
+    if stdout:
+        print 'STDOUT:'
+        print stdout
+    if stderr:
+        print 'STDERR:'
+        print stderr
+    if retcode != 0:
+        raise RuntimeError('Script Failure')
+
+
 class Configurer(object):
     def __init__(self, builder):
         self.builder = builder
