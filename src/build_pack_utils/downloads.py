@@ -3,19 +3,21 @@ import re
 from subprocess import Popen
 from subprocess import PIPE
 
+
 class Downloader(object):
 
     def __init__(self, config):
         self._ctx = config
 
     def download(self, url, toFile):
+        url = url.format(**self._ctx)
         res = urllib2.urlopen(url)
         with open(toFile, 'w') as f:
             f.write(res.read())
         print 'Downloaded [%s] to [%s]' % (url, toFile)
 
     def download_direct(self, url):
-        return urllib2.urlopen(url).read()
+        return urllib2.urlopen(url.format(**self._ctx)).read()
 
 
 class CurlDownloader(object):
@@ -26,6 +28,7 @@ class CurlDownloader(object):
                                           re.DOTALL)
 
     def download(self, url, toFile):
+        url = url.format(**self._ctx)
         proc = Popen(["curl", "-s",
                       "-o", toFile,
                       "-w", '%{http_code}',
@@ -41,7 +44,7 @@ class CurlDownloader(object):
     def download_direct(self, url):
         proc = Popen(["curl", "-s",
                       "-w", '<!-- Status: %{http_code} -->',
-                      url], stdout=PIPE)
+                      url.format(**self._ctx)], stdout=PIPE)
         output, unused_err = proc.communicate()
         proc.poll()
         m = self._status_pattern.match(output)
