@@ -21,13 +21,11 @@ class TestCloudFoundryInstaller(object):
         self.ctx = CloudFoundryUtil.initialize()
         self.ctx.update({
             "CACHE_HASH_ALGORITHM": "sha1",
-            "MAVEN_DOWNLOAD_PREFIX": 
-                "http://apache.osuosl.org/maven/maven-3/3.1.1/binaries/",
-            "MAVEN_PACKAGE": "apache-maven-3.1.1-bin.tar.gz",
-            "MAVEN_PACKAGE_HASH": "630eea2107b0742acb315b214009ba08602dda5f",
-            "MAVEN_STRIP": True,
-            "MAVEN_BUILD_COMMAND": "test",
-            "MAVEN_RUN_COMMAND": "tomcat7:run"
+            "SNAKE_DOWNLOAD_PREFIX": 
+                "http://dl.dropbox.com/u/25717459/mikusa.com/projects/snake/",
+            "SNAKE_PACKAGE": "snake.tar.gz",
+            "SNAKE_PACKAGE_HASH": "cbeec2805bf483093653a7ab1a0532cdae70e430",
+            "SNAKE_STRIP": True
         })
         assert [] == os.listdir(self.buildDir)
         # uncomment to enforce cache is cleared every time
@@ -46,7 +44,7 @@ class TestCloudFoundryInstaller(object):
     @with_setup(setup=setUp, teardown=tearDown)
     def test_installer(self):
         installer = CloudFoundryInstaller(self.ctx)
-        path = installer.install_binary('MAVEN')
+        path = installer.install_binary('SNAKE')
         assert path is not None
-        eq_(os.path.join(self.buildDir, 'maven'), path)
-        assert os.path.exists(os.path.join(self.buildDir, 'maven', 'bin', 'mvn'))
+        eq_(os.path.join(self.buildDir, 'snake'), path)
+        assert os.path.exists(os.path.join(self.buildDir, 'snake', 'js', 'game.js'))
