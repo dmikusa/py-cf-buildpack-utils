@@ -32,3 +32,56 @@ class TestCopytree(object):
         self.assert_exists(self.toDir)
         self.assert_exists(os.path.join(self.toDir, 'options.json'))
         self.assert_exists(os.path.join(self.toDir, 'junk.xml'))
+
+
+class TestFormattedDict(object):
+    def test_empty(self):
+        x = utils.FormattedDict()
+        eq_(0, len(x.keys()))
+
+    def test_basics(self):
+        x = utils.FormattedDict({
+            'A': 1234,
+            'B': 5678
+        })
+        eq_(1234, x['A'])
+        eq_(5678, x['B'])
+        eq_(1234, x.get('A'))
+        eq_(5678, x.get('B'))
+        eq_(None, x.get('C'))
+        eq_(0, x.get('C', 0))
+
+    def test_kwargs(self):
+        x = utils.FormattedDict(A=1234, B=5678)
+        eq_(1234, x['A'])
+        eq_(5678, x['B'])
+        eq_(1234, x.get('A'))
+        eq_(5678, x.get('B'))
+        eq_(None, x.get('C'))
+        eq_(0, x.get('C', 0))
+
+    def test_formatted(self):
+        x = utils.FormattedDict(A=1234, B=5678, C='{A}')
+        eq_('1234', x['C'])
+        eq_('1234', x.get('C'))
+
+    def test_complicated(self):
+        x = utils.FormattedDict({
+            'A': 1234,
+            'B': 5678,
+            'C': '{A}/{B}',
+            'D': '{C}/{B}',
+            'E': '{D}/{C}'
+        })
+        eq_(1234, x['A'])
+        eq_(5678, x['B'])
+        eq_('1234/5678', x['C'])
+        eq_('1234/5678/5678', x['D'])
+        eq_('1234/5678', x.get('C'))
+        eq_('1234/5678/5678', x.get('D'))
+        eq_('1234/5678', x.get('C', None))
+        eq_('1234/5678/5678', x.get('D', None))
+        eq_('1234/5678/5678/1234/5678', x['E'])
+        eq_('1234/5678/5678/1234/5678', x.get('E'))
+        eq_('1234/5678/5678/1234/5678', x.get('E', None))
+        eq_(None, x.get('F', None))
