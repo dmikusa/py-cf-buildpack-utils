@@ -20,11 +20,6 @@ class TestDownloaderUtils(object):
             dwn,
             'http://www.mikusa.com/python-mysql-docs/introduction.html')
 
-    def run_download_format(self, dwn):
-        self._run_download(
-            dwn,
-            '{BASE}/{FILE}')
-
     def run_download_404(self, dwn):
         self._run_download(dwn, 'http://www.mikusa.com/does_not_exist')
 
@@ -32,17 +27,9 @@ class TestDownloaderUtils(object):
         return dwn.download_direct(
             'http://www.mikusa.com/python-mysql-docs/introduction.html')
 
-    def run_download_direct_format(self, dwn):
-        return dwn.download_direct('{BASE}/{FILE}')
-
     # Tests start here
     def test_downloader(self):
         self.run_download(Downloader({}))
-
-    def test_downloader_format(self):
-        self.run_download_format(
-            Downloader({'BASE': 'http://www.mikusa.com/python-mysql-docs/',
-                        'FILE': 'introduction.html'}))
 
     @raises(urllib2.HTTPError)
     def test_downloader_404(self):
@@ -50,11 +37,6 @@ class TestDownloaderUtils(object):
 
     def test_curl_downloader(self):
         self.run_download(CurlDownloader({}))
-
-    def test_curl_downloader_format(self):
-        self.run_download_format(
-            CurlDownloader({'BASE': 'http://www.mikusa.com/python-mysql-docs/',
-                            'FILE': 'introduction.html'}))
 
     @raises(RuntimeError)
     def test_curl_downloader_404(self):
@@ -64,18 +46,6 @@ class TestDownloaderUtils(object):
         data = self.run_download_direct(Downloader({}))
         eq_(1, data.count('PEP 249'))
 
-    def test_download_direct_format(self):
-        data = self.run_download_direct_format(
-            Downloader({'BASE': 'http://www.mikusa.com/python-mysql-docs/',
-                        'FILE': 'introduction.html'}))
-        eq_(1, data.count('PEP 249'))
-
     def test_download_direct_curl(self):
         data = self.run_download_direct(CurlDownloader({}))
-        eq_(1, data.count('PEP 249'))
-
-    def test_download_direct_format_curl(self):
-        data = self.run_download_direct_format(
-            CurlDownloader({'BASE': 'http://www.mikusa.com/python-mysql-docs/',
-                            'FILE': 'introduction.html'}))
         eq_(1, data.count('PEP 249'))
