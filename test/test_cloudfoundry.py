@@ -9,6 +9,7 @@ from build_pack_utils import CloudFoundryUtil
 from build_pack_utils import CloudFoundryInstaller
 from build_pack_utils import Downloader
 from build_pack_utils import CurlDownloader
+from build_pack_utils import utils
 
 
 class TestCloudFoundryUtil(object):
@@ -123,16 +124,18 @@ class TestCloudFoundryInstallerBinaries(object):
 
     def test_install_binary_cached(self):
         # Setup mocks
-        installer = CloudFoundryInstaller({
-            'BP_DIR': '/tmp/build_pack_dir',
-            'BUILD_DIR': '/tmp/build_dir',
-            'CACHE_DIR': '/tmp/cache_dir',
-            'TMPDIR': '/tmp/temp_dir',
-            'LOCAL_PACKAGE': 'tomcat.tar.gz',
-            'LOCAL_PACKAGE_HASH': '1234WXYZ',
-            'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
-            'LOCAL_PACKAGE_INSTALL_DIR': '/tmp/packages'
-        })
+        installer = CloudFoundryInstaller(
+            utils.FormattedDict({
+                'BP_DIR': '/tmp/build_pack_dir',
+                'BUILD_DIR': '/tmp/build_dir',
+                'CACHE_DIR': '/tmp/cache_dir',
+                'TMPDIR': '/tmp/temp_dir',
+                'LOCAL_PACKAGE': 'tomcat.tar.gz',
+                'LOCAL_VERSION': '7.0.50',
+                'LOCAL_PACKAGE_HASH': '1234WXYZ',
+                'LOCAL_DOWNLOAD_URL': 'http://server/path/{LOCAL_VERSION}/{LOCAL_PACKAGE}',
+                'LOCAL_PACKAGE_INSTALL_DIR': '/tmp/packages'
+            }))
         installer._unzipUtil = Dingus('unzip',
                                       extract__returns='/tmp/packages/tomcat')
         installer._hashUtil = Dingus('hash',
@@ -147,7 +150,7 @@ class TestCloudFoundryInstallerBinaries(object):
         assert None is installer._dcm.calls('get')[0].return_value
         # download is called once with file path
         assert installer._dwn.download.calls().once()
-        assert 'PREFIX/tomcat.tar.gz' == \
+        assert 'http://server/path/7.0.50/tomcat.tar.gz' == \
             installer._dwn.calls('download')[0].args[0]
         # hash is called with file path
         assert installer._hashUtil.calculate_hash.calls().once()
