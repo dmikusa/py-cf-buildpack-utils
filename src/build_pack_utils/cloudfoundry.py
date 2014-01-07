@@ -17,7 +17,7 @@ class CloudFoundryUtil(object):
         # Open stdout unbuffered
         if hasattr(sys.stdout, 'fileno'):
             sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
-        ctx = {}
+        ctx = utils.FormattedDict()
         # Add environment variables
         ctx.update(os.environ)
         # Build Pack Location
