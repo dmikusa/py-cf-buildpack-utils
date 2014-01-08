@@ -204,7 +204,8 @@ class TestConfigInstaller(object):
         self.ctx = {
             'BUILD_DIR': 'test/data/',
             'CACHE_DIR': '/tmp/cache',
-            'BP_DIR': 'test/data/'
+            'BP_DIR': 'test/data/',
+            'VERSION': '1.0.0'
         }
         self.cfInst = Dingus()
         self.builder = Dingus(_ctx=self.ctx)
@@ -231,6 +232,14 @@ class TestConfigInstaller(object):
         res = self.cfgInst.to('some/other/file.txt')
         assert res is self.cfgInst
         eq_('some/other/file.txt', self.cfgInst._to_path)
+
+    def test_format(self):
+        res = self.cfgInst.to('test/{VERSION}')
+        eq_('test/1.0.0', self.cfgInst._to_path)
+        res = self.cfgInst.from_application('some/{VERSION}')
+        eq_('some/1.0.0', self.cfgInst._app_path)
+        res = self.cfgInst.from_build_pack('some/{VERSION}')
+        eq_('some/1.0.0', self.cfgInst._bp_path)
 
     def test_done_nothing(self):
         res = self.cfgInst.done()
