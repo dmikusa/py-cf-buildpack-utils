@@ -501,7 +501,8 @@ class TestFileUtil(object):
 
 class TestRunner(object):
     def __init__(self):
-        self.builder = Dingus(cfg={'KEY': 'TEST'})
+        self.builder = Dingus(
+            _ctx={'VERSION': '1.0.0'})
 
     def test_command_string(self):
         r = Runner(self.builder)
@@ -527,7 +528,9 @@ class TestRunner(object):
         r = Runner(self.builder)
         res = r.out_of('TEST')
         assert res is r
-        assert 'TEST' == r._path
+        eq_('TEST', r._path)
+        res = r.out_of('{VERSION}')
+        eq_('1.0.0', r._path)
 
     def test_out_of_method(self):
         method = Dingus(return_value='TEST')
@@ -538,9 +541,9 @@ class TestRunner(object):
 
     def test_out_of_key(self):
         r = Runner(self.builder)
-        res = r.out_of('KEY')
+        res = r.out_of('VERSION')
         assert res is r
-        eq_('KEY', r._path)
+        eq_('1.0.0', r._path)
 
     def test_with_shell(self):
         r = Runner(self.builder)
