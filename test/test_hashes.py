@@ -45,6 +45,12 @@ class TestHashUtils(object):
             "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53"
             "fbd0e8fa973f782b27b2059b72f46c5080411f018651808a6f716eec08bc1f1")
 
+    def test_hash_util_matches_extended_hash(self):
+        self.hash_file_matches(
+            HashUtil({'CACHE_HASH_ALGORITHM': 'sha512'}),
+            "829640ff489bbc9d12267fe5bbae69e0e65f293171a126b22bb760bc259120e53"
+            "fbd0e8fa973f782b27b2059b72f46c5080411f018651808a6f716eec08bc1f1 ./test/data/HASH")
+
     def test_hash_util_not_matches(self):
         self.hash_file_not_matches(
             HashUtil({'CACHE_HASH_ALGORITHM': 'sha512'}),
