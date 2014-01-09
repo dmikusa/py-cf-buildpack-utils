@@ -13,9 +13,10 @@ class TestCloudFoundryInstaller(object):
         # save the old stdout && args
         self.old_sys_argv = sys.argv
         self.old_stdout = sys.stdout
-        # insert args for testing
-        self.buildDir = os.path.join(tempfile.gettempdir(), 'bp-util', 'build')
-        self.cacheDir = os.path.join(tempfile.gettempdir(), 'bp-util', 'cache')
+        # insert args for testinga
+        self.rootDir = os.path.join(tempfile.gettempdir(), 'bp-util')
+        self.buildDir = os.path.join(self.rootDir, 'build')
+        self.cacheDir = os.path.join(self.rootDir, 'cache')
         sys.argv = [sys.argv[0], self.buildDir, self.cacheDir]
         # setup tests
         self.ctx = CloudFoundryUtil.initialize()
@@ -32,9 +33,9 @@ class TestCloudFoundryInstaller(object):
         #assert [] == os.listdir(self.cacheDir)
 
     def tearDown(self):
-        # delete downloaded file
-        if os.path.exists(self.buildDir):
-            shutil.rmtree(self.buildDir)
+        # delete downloaded and temp files
+        if os.path.exists(self.rootDir):
+            shutil.rmtree(self.rootDir)
         snakeFile = os.path.join(os.environ['TMPDIR'], 'snake.tar.gz')
         if os.path.exists(snakeFile):
             os.remove(snakeFile)
