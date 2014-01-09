@@ -8,11 +8,18 @@ from build_pack_utils import CurlDownloader
 
 
 class TestDownloaderUtils(object):
+    def setUp(self):
+        self.downloadFile = os.path.join(tempfile.gettempdir(),
+                                         'introduction.html')
+
+    def tearDown(self):
+        if os.path.exists(self.downloadFile):
+            os.remove(self.downloadFile)
+
     def _run_download(self, dwn, url):
-        path = os.path.join(tempfile.gettempdir(), 'introduction.html')
-        dwn.download(url, path)
-        eq_(True, os.path.exists(path))
-        with open(path, 'rt') as keysFile:
+        dwn.download(url, self.downloadFile)
+        eq_(True, os.path.exists(self.downloadFile))
+        with open(self.downloadFile, 'rt') as keysFile:
             eq_(1, keysFile.read().count('PEP 249'))
 
     def run_download(self, dwn):
