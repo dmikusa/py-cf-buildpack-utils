@@ -21,9 +21,9 @@ class TestCloudFoundryInstaller(object):
         self.ctx = CloudFoundryUtil.initialize()
         self.ctx.update({
             "CACHE_HASH_ALGORITHM": "sha1",
-            "SNAKE_DOWNLOAD_PREFIX": 
-                "http://dl.dropbox.com/u/25717459/mikusa.com/projects/snake/",
             "SNAKE_PACKAGE": "snake.tar.gz",
+            "SNAKE_DOWNLOAD_URL": 
+                "http://dl.dropbox.com/u/25717459/mikusa.com/projects/snake/{SNAKE_PACKAGE}",
             "SNAKE_PACKAGE_HASH": "cbeec2805bf483093653a7ab1a0532cdae70e430",
             "SNAKE_STRIP": True
         })
@@ -32,8 +32,12 @@ class TestCloudFoundryInstaller(object):
         #assert [] == os.listdir(self.cacheDir)
 
     def tearDown(self):
+        # delete downloaded file
         if os.path.exists(self.buildDir):
             shutil.rmtree(self.buildDir)
+        snakeFile = os.path.join(os.environ['TMPDIR'], 'snake.tar.gz')
+        if os.path.exists(snakeFile):
+            os.remove(snakeFile)
         # uncomment to force download every time
         #if os.path.exists(self.cacheDir):
         #   shutil.rmtree(self.cacheDir)
