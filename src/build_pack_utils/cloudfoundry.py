@@ -114,9 +114,9 @@ class CloudFoundryInstaller(object):
     def _install_from(self, fromPath, fromLoc, toLocation=None, ignore=None):
         """Copy file or directory from a location to the droplet
 
-        Copies a file or directory from a location to the application 
+        Copies a file or directory from a location to the application
         droplet. Directories are copied recursively, but specific files
-        in those directories can be ignored by specifing the ignore parameter. 
+        in those directories can be ignored by specifing the ignore parameter.
 
             fromPath   -> file to copy, relative build pack
             fromLoc    -> root of the from path.  Full path to file or
@@ -141,9 +141,9 @@ class CloudFoundryInstaller(object):
     def install_from_build_pack(self, fromPath, toLocation=None, ignore=None):
         """Copy file or directory from the build pack to the droplet
 
-        Copies a file or directory from the build pack to the application 
+        Copies a file or directory from the build pack to the application
         droplet. Directories are copied recursively, but specific files
-        in those directories can be ignored by specifing the ignore parameter. 
+        in those directories can be ignored by specifing the ignore parameter.
 
             fromPath   -> file to copy, relative build pack
             toLocation -> optional location where to copy the file
@@ -164,7 +164,7 @@ class CloudFoundryInstaller(object):
         Copies a file or directory from one place to another place within the
         application droplet.
 
-            fromPath   -> file or directory to copy, relative 
+            fromPath   -> file or directory to copy, relative
                           to application droplet.
             toLocation -> location where to copy the file,
                           relative to app droplet.
