@@ -167,11 +167,20 @@ class ModuleInstaller(object):
         self._extn = ''
         self._modules = []
         self._load_modules = self._default_load_method
+        self._regex = None
 
     def _default_load_method(self, path):
+        with open(path, 'rt') as f:
+            return [line.strip() for line in f]
+
+    def _regex_load_method(self, path):
         modules = []
         with open(path, 'rt') as f:
-            return [line.strip() for line in f.readlines()]
+            for line in f:
+                m = self._regex.match(line.strip())
+                if m:
+                    modules.append(m.group(1))
+        return modules
 
     def filter_files_by_extension(self, extn):
         self._extn = extn
@@ -179,6 +188,11 @@ class ModuleInstaller(object):
 
     def find_modules_with(self, method):
         self._load_modules = method
+        return self
+
+    def find_modules_with_regex(self, regex):
+        self._regex = re.compile(regex)
+        self._load_modules = self._regex_load_method
         return self
 
     def from_application(self, path):

@@ -1086,6 +1086,20 @@ class TestModuleInstaller(object):
         eq_('Module2', res[1])
         eq_('Module3', res[2])
 
+    def test_regex_load_method(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        mi.find_modules_with_regex(r'(.*)')
+        res = mi._regex_load_method('test/data/modules.txt')
+        eq_(3, len(res))
+        eq_('Module1', res[0])
+        eq_('Module2', res[1])
+        eq_('Module3', res[2])
+        res = mi._load_modules('test/data/modules.txt')
+        eq_(3, len(res))
+        eq_('Module1', res[0])
+        eq_('Module2', res[1])
+        eq_('Module3', res[2])
+
     def test_filter_files_by_extension(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
         res = mi.filter_files_by_extension('.conf')
@@ -1099,6 +1113,13 @@ class TestModuleInstaller(object):
         res = mi.find_modules_with(method)
         eq_(mi, res)
         eq_(method, mi._load_modules)
+
+    def test_find_modules_with_regex(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        eq_(mi._default_load_method, mi._load_modules)
+        res = mi.find_modules_with_regex(r'(.*)')
+        eq_(mi, res)
+        eq_(mi._regex_load_method, mi._load_modules)
 
     def test_from_application_file(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
