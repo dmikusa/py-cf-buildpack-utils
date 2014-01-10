@@ -21,6 +21,8 @@ from build_pack_utils import ConfigInstaller
 from build_pack_utils import FileUtil
 from build_pack_utils import BuildPackManager
 from build_pack_utils import ExtensionInstaller
+from build_pack_utils import ModuleInstaller
+from build_pack_utils import utils
 
 
 class TestConfigurer(object):
@@ -1054,3 +1056,79 @@ class TestExtensionInstaller(object):
             assert False, "should not reach this code"
         except ValueError, e:
             eq_('Intentional', str(e))
+
+
+class TestModuleInstaller(object):
+    def setUp(self):
+        self.ctx = utils.FormattedDict({
+            'CACHE_HASH_ALGORITHM': 'sha1',
+            'LOCAL_MODULES_PATTERN': 'pattern/{MODULE_NAME}',
+            'BUILD_DIR': 'test/data',
+            'BP_DIR': '/tmp/bp_dir',
+            'CACHE_DIR': '/tmp/cache_dir'
+        })
+        self.builder = Dingus(_ctx=self.ctx)
+        self.inst = Dingus(_builder=self.builder)
+
+    def tearDown(self):
+        pass
+
+    def test_default_load_modules(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        res = mi._default_load_method('test/data/modules.txt')
+        eq_(3, len(res))
+        eq_('Module1', res[0])
+        eq_('Module2', res[1])
+        eq_('Module3', res[2])
+        res = mi._load_modules('test/data/modules.txt')
+        eq_(3, len(res))
+        eq_('Module1', res[0])
+        eq_('Module2', res[1])
+        eq_('Module3', res[2])
+
+    def test_filter_files_by_extension(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        res = mi.filter_files_by_extension('.conf')
+        eq_(mi, res)
+        eq_('.conf', mi._extn)
+
+    def test_find_modules_with(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        method = Dingus()
+        eq_(mi._default_load_method, mi._load_modules)
+        res = mi.find_modules_with(method)
+        eq_(mi, res)
+        eq_(method, mi._load_modules)
+
+    def test_from_application_file(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        res = mi.from_application('modules.txt')
+        eq_(mi, res)
+        eq_(3, len(mi._modules))
+        eq_(True, 'Module1' in mi._modules)
+        eq_(True, 'Module2' in mi._modules)
+        eq_(True, 'Module3' in mi._modules)
+    
+    def test_from_application_directory(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        mi.filter_files_by_extension('.txt')
+        res = mi.from_application('')
+        eq_(mi, res)
+        eq_(3, len(mi._modules))
+        eq_(True, 'Module1' in mi._modules)
+        eq_(True, 'Module2' in mi._modules)
+        eq_(True, 'Module3' in mi._modules)
+
+    def test_done(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        mi._cf = Dingus()
+        mi.filter_files_by_extension('.txt')
+        mi.from_application('')
+        mi.done()
+        eq_(3, len(mi._cf.install_binary_direct.calls()))
+        for mod, call in zip(mi._modules, mi._cf.install_binary_direct.calls):
+            eq_(4, len(call.args))
+            eq_('pattern/%s' % mod, call.args[0])
+            eq_('pattern/%s.sha1' % mod, call.args[1])
+            eq_('test/data/local', call.args[2])
+            eq_(False, call.args[3])
