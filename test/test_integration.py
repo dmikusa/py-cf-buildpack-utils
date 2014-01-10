@@ -23,9 +23,10 @@ class TestCloudFoundryInstaller(object):
         self.ctx.update({
             "CACHE_HASH_ALGORITHM": "sha1",
             "SNAKE_PACKAGE": "snake.tar.gz",
+            "HOST": "dl.dropboxusercontent.com",
+            "PATH": "u/186123235/py-cf-buildpack-utils-tests",
             "SNAKE_DOWNLOAD_URL": 
-                "http://dl.dropbox.com/u/25717459/mikusa.com/projects/snake/{SNAKE_PACKAGE}",
-            "SNAKE_PACKAGE_HASH": "cbeec2805bf483093653a7ab1a0532cdae70e430",
+                "https://{HOST}/{PATH}/{SNAKE_PACKAGE}",
             "SNAKE_STRIP": True
         })
         assert [] == os.listdir(self.buildDir)
