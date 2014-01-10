@@ -102,29 +102,14 @@ class CloudFoundryInstaller(object):
                                        strip)
 
     def install_binary(self, installKey):
-        fileName = self._ctx['%s_PACKAGE' % installKey]
-        digest = self._ctx['%s_PACKAGE_HASH' % installKey]
-        # check cache & compare digest
-        # use cached file or download new
-        # download based on ctx settings
-        fileToInstall = self._dcm.get(fileName, digest)
-        if fileToInstall is None:
-            fileToInstall = os.path.join(self._ctx['TMPDIR'], fileName)
-            self._dwn.download(self._ctx['%s_DOWNLOAD_URL' % installKey],
-                               fileToInstall)
-            digest = self._hashUtil.calculate_hash(fileToInstall)
-            fileToInstall = self._dcm.put(fileName, fileToInstall, digest)
-        # unzip
-        # install to ctx determined location 'PACKAGE_INSTALL_DIR'
-        #  into or CF's BUILD_DIR
-        pkgKey = '%s_PACKAGE_INSTALL_DIR' % installKey
-        stripKey = '%s_STRIP' % installKey
-        installIntoDir = os.path.join(
-            self._ctx.get(pkgKey, self._ctx['BUILD_DIR']),
-            installKey.lower())
-        return self._unzipUtil.extract(fileToInstall,
-                                       installIntoDir,
-                                       self._ctx.get(stripKey, False))
+        url = self._ctx['%s_DOWNLOAD_URL' % installKey]
+        hashUrl = "%s.%s" % (url, self._ctx['CACHE_HASH_ALGORITHM'])
+        installDir = os.path.join(self._ctx['BUILD_DIR'],
+                                  self._ctx.get(
+                                      '%s_PACKAGE_INSTALL_DIR' % installKey,
+                                      installKey.lower()))
+        strip = self._ctx.get('%s_STRIP' % installKey, False)
+        return self.install_binary_direct(url, hashUrl, installDir, strip)
 
     def _install_from(self, fromPath, fromLoc, toLocation=None, ignore=None):
         """Copy file or directory from a location to the droplet

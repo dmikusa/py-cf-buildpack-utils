@@ -126,18 +126,18 @@ class TestCloudFoundryInstallerBinaries(object):
         # Setup mocks
         installer = CloudFoundryInstaller(
             utils.FormattedDict({
+                'CACHE_HASH_ALGORITHM': 'sha1',
                 'BP_DIR': '/tmp/build_pack_dir',
                 'BUILD_DIR': '/tmp/build_dir',
                 'CACHE_DIR': '/tmp/cache_dir',
                 'TMPDIR': '/tmp/temp_dir',
                 'LOCAL_PACKAGE': 'tomcat.tar.gz',
                 'LOCAL_VERSION': '7.0.50',
-                'LOCAL_PACKAGE_HASH': '1234WXYZ',
                 'LOCAL_DOWNLOAD_URL': 'http://server/path/{LOCAL_VERSION}/{LOCAL_PACKAGE}',
-                'LOCAL_PACKAGE_INSTALL_DIR': '/tmp/packages'
+                'LOCAL_PACKAGE_INSTALL_DIR': 'packages/tomcat'
             }))
         installer._unzipUtil = Dingus('unzip',
-                                      extract__returns='/tmp/packages/tomcat')
+                                      extract__returns='/tmp/build_dir/packages/tomcat')
         installer._hashUtil = Dingus('hash',
                                      calculate_hash__returns='1234WXYZ')
         installer._dcm = Dingus('dcm', get__returns=None)
@@ -163,11 +163,12 @@ class TestCloudFoundryInstallerBinaries(object):
         # file is extracted
         assert installer._unzipUtil.extract.calls().once()
         # verify installation directory
-        eq_('/tmp/packages/tomcat', instDir)
+        eq_('/tmp/build_dir/packages/tomcat', instDir)
 
     def test_install_binary_direct_cached(self):
         # Setup mocks
         installer = CloudFoundryInstaller({
+            'CACHE_HASH_ALGORITHM': 'sha1',
             'BP_DIR': '/tmp/build_pack_dir',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
@@ -210,12 +211,12 @@ class TestCloudFoundryInstallerBinaries(object):
     def test_install_binary_not_cached(self):
         # Setup mocks
         installer = CloudFoundryInstaller({
+            'CACHE_HASH_ALGORITHM': 'sha1',
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache_dir',
             'TMPDIR': '/tmp/temp_dir',
             'LOCAL_PACKAGE': 'tomcat.tar.gz',
-            'LOCAL_PACKAGE_HASH': '1234WXYZ',
-            'LOCAL_DOWNLOAD_PREFIX': 'PREFIX',
+            'LOCAL_DOWNLOAD_URL': 'http://localhost/{LOCAL_PACKAGE}'
         })
         installer._unzipUtil = Dingus('unzip',
                                       extract__returns='/tmp/build_dir/tomcat')
