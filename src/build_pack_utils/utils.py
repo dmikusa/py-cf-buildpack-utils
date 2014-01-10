@@ -20,7 +20,10 @@ class FormattedDict(dict):
         return self._format(dict.__getitem__(self, key))
 
     def get(self, *args, **kwargs):
-        return self._format(dict.get(self, *args, **kwargs))
+        if kwargs.get('format', True):
+            return self._format(dict.get(self, *args))
+        else:
+            return dict.get(self, *args)
 
 
 # This is copytree from PyPy 2.7 source code.  

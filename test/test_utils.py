@@ -85,3 +85,16 @@ class TestFormattedDict(object):
         eq_('1234/5678/5678/1234/5678', x.get('E'))
         eq_('1234/5678/5678/1234/5678', x.get('E', None))
         eq_(None, x.get('F', None))
+
+    def test_plain(self):
+        x = utils.FormattedDict({
+            'A': 1234,
+            'B': 5678,
+            'C': '{A}/{B}',
+            'D': '{C}/{B}',
+            'E': '{D}/{C}'
+        })
+        eq_(1234, x.get('A', format=False))
+        eq_(5678, x.get('B', format=False))
+        eq_('{A}/{B}', x.get('C', format=False))
+        eq_('1234/5678', x.get('C', format=True))
