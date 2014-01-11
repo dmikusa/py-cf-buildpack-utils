@@ -1106,6 +1106,15 @@ class TestModuleInstaller(object):
         eq_(mi, res)
         eq_('.conf', mi._extn)
 
+    def test_include_module(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        mi.include_module('test1')
+        res = mi.include_module('test2')
+        eq_(mi, res)
+        eq_(2, len(mi._modules))
+        eq_('test1', mi._modules[0])
+        eq_('test2', mi._modules[1])
+
     def test_find_modules_with(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
         method = Dingus()
