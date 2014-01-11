@@ -1068,7 +1068,7 @@ class TestModuleInstaller(object):
             'CACHE_DIR': '/tmp/cache_dir'
         })
         self.builder = Dingus(_ctx=self.ctx)
-        self.inst = Dingus(_builder=self.builder)
+        self.inst = Dingus(builder=self.builder)
 
     def tearDown(self):
         pass
