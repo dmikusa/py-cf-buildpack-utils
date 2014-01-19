@@ -238,10 +238,13 @@ class TestConfigInstaller(object):
 
     def test_format(self):
         res = self.cfgInst.to('test/{VERSION}')
+        eq_(self.cfgInst, res)
         eq_('test/1.0.0', self.cfgInst._to_path)
         res = self.cfgInst.from_application('some/{VERSION}')
+        eq_(self.cfgInst, res)
         eq_('some/1.0.0', self.cfgInst._app_path)
         res = self.cfgInst.from_build_pack('some/{VERSION}')
+        eq_(self.cfgInst, res)
         eq_('some/1.0.0', self.cfgInst._bp_path)
 
     def test_done_nothing(self):
@@ -586,8 +589,8 @@ class TestRunner(object):
         r = Runner(self.builder)
         preLen = len(r._env.keys())
         res = (r.environment_variable()
-                   .name('JUNK')
-                   .value('2134'))
+               .name('JUNK')
+               .value('2134'))
         assert r is res
         assert 1 == (len(r._env.keys()) - preLen)
         assert 'JUNK' in r._env.keys()
@@ -767,6 +770,7 @@ class TestExtensionScriptBuilder(object):
         esb = ExtensionScriptBuilder(self.ssb)
         eq_(0, len(esb._paths))
         res = esb.from_path('test/data')
+        eq_(esb, res)
         eq_(0, len(esb._paths))
 
     def test_from_path_single(self):
@@ -1062,7 +1066,8 @@ class TestBuildPackManager(object):
 
     def test_from_buildpack(self):
         em = BuildPackManager(self.builder)
-        em.from_buildpack('https://github.com/dmikusa-pivotal/cf-test-buildpack')
+        em.from_buildpack(
+            'https://github.com/dmikusa-pivotal/cf-test-buildpack')
         em.using_branch(None)
         old_sysout = sys.stdout
         new_sysout = StringIO()
@@ -1207,7 +1212,7 @@ class TestModuleInstaller(object):
         eq_(True, 'Module1' in mi._modules)
         eq_(True, 'Module2' in mi._modules)
         eq_(True, 'Module3' in mi._modules)
-    
+
     def test_from_application_directory(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
         mi.filter_files_by_extension('.txt')

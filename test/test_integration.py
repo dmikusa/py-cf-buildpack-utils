@@ -25,8 +25,7 @@ class TestCloudFoundryInstaller(object):
             "SNAKE_PACKAGE": "snake.tar.gz",
             "HOST": "dl.dropboxusercontent.com",
             "PATH": "u/186123235/py-cf-buildpack-utils-tests",
-            "SNAKE_DOWNLOAD_URL": 
-                "https://{HOST}/{PATH}/{SNAKE_PACKAGE}",
+            "SNAKE_DOWNLOAD_URL": "https://{HOST}/{PATH}/{SNAKE_PACKAGE}",
             "SNAKE_STRIP": True
         })
         assert [] == os.listdir(self.buildDir)
@@ -53,4 +52,5 @@ class TestCloudFoundryInstaller(object):
         path = installer.install_binary('SNAKE')
         assert path is not None
         eq_(os.path.join(self.buildDir, 'snake'), path)
-        assert os.path.exists(os.path.join(self.buildDir, 'snake', 'js', 'game.js'))
+        assert os.path.exists(os.path.join(self.buildDir, 'snake',
+                                           'js', 'game.js'))

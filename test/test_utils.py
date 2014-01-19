@@ -5,6 +5,7 @@ from nose.tools import eq_
 from nose.tools import with_setup
 from build_pack_utils import utils
 
+
 class TestCopytree(object):
     def setUp(self):
         self.toDir = tempfile.mkdtemp(prefix='copytree-')

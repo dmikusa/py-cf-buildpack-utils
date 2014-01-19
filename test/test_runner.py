@@ -35,9 +35,12 @@ class TestRunner(object):
         self.bp._clone()
         eq_(True, os.path.exists(self.bp.bp_dir))
         eq_(True, os.path.exists(os.path.join(self.bp.bp_dir, 'bin')))
-        eq_(True, os.path.exists(os.path.join(self.bp.bp_dir, 'bin', 'compile')))
-        eq_(True, os.path.exists(os.path.join(self.bp.bp_dir, 'bin', 'release')))
-        eq_(True, os.path.exists(os.path.join(self.bp.bp_dir, 'bin', 'detect')))
+        eq_(True, os.path.exists(os.path.join(self.bp.bp_dir,
+                                              'bin', 'compile')))
+        eq_(True, os.path.exists(os.path.join(self.bp.bp_dir,
+                                              'bin', 'release')))
+        eq_(True, os.path.exists(os.path.join(self.bp.bp_dir,
+                                              'bin', 'detect')))
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_detect(self):
@@ -50,7 +53,7 @@ class TestRunner(object):
         self.bp._clone()
         os.remove(os.path.join(self.ctx['BUILD_DIR'], 'cache-test.txt'))
         try:
-            res = self.bp._detect()
+            self.bp._detect()
             assert "Should Fail!", False
         except Exception, e:
             eq_(155, str(e).find('returned non-zero exit status 1'))
@@ -74,4 +77,3 @@ class TestRunner(object):
     @with_setup(setup=setUp, teardown=tearDown)
     def test_run(self):
         self.bp.run()
-
