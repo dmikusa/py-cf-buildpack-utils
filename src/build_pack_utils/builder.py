@@ -234,6 +234,7 @@ class ModuleInstaller(object):
 class ExtensionInstaller(object):
     def __init__(self, installer):
         self._installer = installer
+        self._ctx = installer.builder._ctx
         self._paths = []
         self._ignore = True
 
