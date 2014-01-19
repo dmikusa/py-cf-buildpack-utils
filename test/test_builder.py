@@ -763,20 +763,28 @@ class TestExtensionScriptBuilder(object):
         self.builder = Dingus(_ctx=self.ctx)
         self.ssb = Dingus(builder=self.builder)
 
-    def test_from_location(self):
+    def test_from_path_none(self):
         esb = ExtensionScriptBuilder(self.ssb)
         eq_(0, len(esb._paths))
-        res = esb.from_location('test/data')
+        res = esb.from_path('test/data')
+        eq_(0, len(esb._paths))
+
+    def test_from_path_single(self):
+        esb = ExtensionScriptBuilder(self.ssb)
+        eq_(0, len(esb._paths))
+        res = esb.from_path('test/data/plugins/test1')
         eq_(esb, res)
         eq_(1, len(esb._paths))
-        eq_(os.path.join(os.getcwd(), 'test/data'), esb._paths[0])
+        eq_(os.path.join(os.getcwd(),
+                         'test/data/plugins/test1'),
+                         esb._paths[0])
 
-    def test_from_directory(self):
+    def test_from_path_multiple(self):
         cwd = os.getcwd()
         path = 'test/data/plugins'
         esb = ExtensionScriptBuilder(self.ssb)
         eq_(0, len(esb._paths))
-        res = esb.from_directory(path)
+        res = esb.from_path(path)
         eq_(esb, res)
         eq_(3, len(esb._paths))
         eq_(True, os.path.join(cwd, path, 'test1') in esb._paths)
@@ -803,7 +811,7 @@ class TestExtensionScriptBuilder(object):
         extn = Dingus(setup_start_script=Dingus(return_value=0))
         esb = ExtensionScriptBuilder(self.ssb)
         esb._load_extension = Dingus(return_value=extn)
-        esb.from_location('test/data/plugins/test1')
+        esb.from_path('test/data/plugins/test1')
         res = esb.done()
         eq_(self.ssb, res)
         eq_(1, len(esb._load_extension.calls()))
