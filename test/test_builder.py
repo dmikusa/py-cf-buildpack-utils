@@ -1097,18 +1097,18 @@ class TestExtensionInstaller(object):
 
     def test_from_location(self):
         ei = ExtensionInstaller(self.inst)
-        ei.from_location('test/data/plugins/test1')
+        ei.from_path('test/data/plugins/test1')
         ei.ignore_errors(False)
         ei.done()
 
     def test_from_directory(self):
         ei = ExtensionInstaller(self.inst)
-        ei.from_directory('test/data/plugins')
+        ei.from_path('test/data/plugins')
         ei.done()
 
     def test_fails_retcode(self):
         ei = ExtensionInstaller(self.inst)
-        ei.from_location('test/data/plugins/test2')
+        ei.from_path('test/data/plugins/test2')
         ei.ignore_errors(False)
         try:
             ei.done()
@@ -1118,7 +1118,7 @@ class TestExtensionInstaller(object):
 
     def test_fails_exception(self):
         ei = ExtensionInstaller(self.inst)
-        ei.from_location('test/data/plugins/test3')
+        ei.from_path('test/data/plugins/test3')
         ei.ignore_errors(False)
         try:
             ei.done()
