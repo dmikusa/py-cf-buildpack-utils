@@ -174,7 +174,8 @@ class TestInstaller(object):
         self.ctx = {
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache',
-            'BP_DIR': '/tmp/build_dir'
+            'BP_DIR': '/tmp/build_dir',
+            'PACKAGE': 'TMP'
         }
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Installer(self.builder)
@@ -185,6 +186,14 @@ class TestInstaller(object):
         res = self.inst.package('TEST')
         assert 'TEST_INSTALL_PATH' in self.ctx
         eq_('/tmp/installed/TEST', self.ctx['TEST_INSTALL_PATH'])
+        assert self.inst == res
+
+    def test_package_from_ctx(self):
+        self.inst._installer = Dingus(
+            install_binary__returns='/tmp/installed/TMP')
+        res = self.inst.package('PACKAGE') # from ctx
+        assert 'TMP_INSTALL_PATH' in self.ctx
+        eq_('/tmp/installed/TMP', self.ctx['TMP_INSTALL_PATH'])
         assert self.inst == res
 
     def test_packages(self):
