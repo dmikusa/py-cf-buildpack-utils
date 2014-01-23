@@ -770,7 +770,8 @@ class TestExtensionScriptBuilder(object):
     def __init__(self):
         self.ctx = {
             'BUILD_DIR': tempfile.gettempdir(),
-            'BP_DIR': '/tmp/build_dir'
+            'BP_DIR': '/tmp/build_dir',
+            'PLUGIN_PATH': 'test/data/plugins'
         }
         self.builder = Dingus(_ctx=self.ctx)
         self.ssb = Dingus(builder=self.builder)
@@ -803,6 +804,16 @@ class TestExtensionScriptBuilder(object):
         eq_(True, os.path.join(cwd, path, 'test1') in esb._paths)
         eq_(True, os.path.join(cwd, path, 'test2') in esb._paths)
         eq_(True, os.path.join(cwd, path, 'test3') in esb._paths)
+
+    def test_from_path_format(self):
+        esb = ExtensionScriptBuilder(self.ssb)
+        eq_(0, len(esb._paths))
+        res = esb.from_path('{PLUGIN_PATH}/test1')
+        eq_(esb, res)
+        eq_(1, len(esb._paths))
+        eq_(os.path.join(os.getcwd(),
+                         'test/data/plugins/test1'),
+                         esb._paths[0])
 
     def test_ignore_errors(self):
         esb = ExtensionScriptBuilder(self.ssb)
@@ -1097,7 +1108,8 @@ class TestExtensionInstaller(object):
         self.ctx = {
             'BUILD_DIR': '/tmp/build_dir',
             'BP_DIR': '/tmp/bp_dir',
-            'CACHE_DIR': '/tmp/cache_dir'
+            'CACHE_DIR': '/tmp/cache_dir',
+            'PLUGIN': 'plugins'
         }
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Dingus(builder=self.builder)
@@ -1111,14 +1123,21 @@ class TestExtensionInstaller(object):
 
     def test_from_location(self):
         ei = ExtensionInstaller(self.inst)
+        eq_(0, len(ei._paths))
         ei.from_path('test/data/plugins/test1')
-        ei.ignore_errors(False)
-        ei.done()
+        eq_(1, len(ei._paths))
 
     def test_from_directory(self):
         ei = ExtensionInstaller(self.inst)
+        eq_(0, len(ei._paths))
         ei.from_path('test/data/plugins')
-        ei.done()
+        eq_(3, len(ei._paths))
+
+    def test_from_path_with_format(self):
+        ei = ExtensionInstaller(self.inst)
+        eq_(0, len(ei._paths))
+        ei.from_path('test/data/{PLUGIN}')
+        eq_(3, len(ei._paths))
 
     def test_fails_retcode(self):
         ei = ExtensionInstaller(self.inst)
