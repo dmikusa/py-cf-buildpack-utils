@@ -61,7 +61,7 @@ class TestConfigurer(object):
         assert res is self.cfgur
 
 
-class TestDetector(object):
+class TestDetecter(object):
     def __init__(self):
         self.ctx = {
             'BUILD_DIR': '/tmp/build_dir'
@@ -134,6 +134,41 @@ class TestDetector(object):
         eq_('TEST', d._root)
         assert not d._recursive
 
+    def test_continue(self):
+        d = Detecter(self.builder)
+        eq_(False, d._continue)
+        res = d.when_not_found_continue()
+        eq_(d, res)
+        eq_(True, d._continue)
+
+    def test_no_detecter(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            d = Detecter(self.builder)
+            d.done()
+            assert False  # shouldFail
+        except SystemExit, e:
+            eq_(1, e.code)
+        finally:
+            sys.stdout = old_sysout
+        eq_('no\n', new_sysout.getvalue())
+
+    def test_no_detecter_continue(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            d = Detecter(self.builder)
+            d.when_not_found_continue()
+            d.done()
+        except SystemExit, e:
+            assert False  # shouldFail
+        finally:
+            sys.stdout = old_sysout
+        eq_('', new_sysout.getvalue())
+
     def test_done_found(self):
         old_sysout = sys.stdout
         new_sysout = StringIO()
@@ -167,6 +202,23 @@ class TestDetector(object):
         finally:
             sys.stdout = old_sysout
         eq_('no\n', new_sysout.getvalue())
+
+    def test_done_continue(self):
+        old_sysout = sys.stdout
+        new_sysout = StringIO()
+        try:
+            sys.stdout = new_sysout
+            d = Detecter(self.builder)
+            d.at('./test/data')
+            d.by_name('NOTFOUND')
+            d.if_found_output('HASH')
+            d.when_not_found_continue()
+            d.done()
+        except SystemExit, e:
+            assert False  # shouldFail
+        finally:
+            sys.stdout = old_sysout
+        eq_('', new_sysout.getvalue())
 
 
 class TestInstaller(object):
