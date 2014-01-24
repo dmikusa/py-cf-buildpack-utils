@@ -163,7 +163,7 @@ class TestDetecter(object):
             d = Detecter(self.builder)
             d.when_not_found_continue()
             d.done()
-        except SystemExit, e:
+        except SystemExit:
             assert False  # shouldFail
         finally:
             sys.stdout = old_sysout
@@ -214,7 +214,7 @@ class TestDetecter(object):
             d.if_found_output('HASH')
             d.when_not_found_continue()
             d.done()
-        except SystemExit, e:
+        except SystemExit:
             assert False  # shouldFail
         finally:
             sys.stdout = old_sysout
@@ -243,7 +243,7 @@ class TestInstaller(object):
     def test_package_from_ctx(self):
         self.inst._installer = Dingus(
             install_binary__returns='/tmp/installed/TMP')
-        res = self.inst.package('PACKAGE') # from ctx
+        res = self.inst.package('PACKAGE')  # from ctx
         assert 'TMP_INSTALL_PATH' in self.ctx
         eq_('/tmp/installed/TMP', self.ctx['TMP_INSTALL_PATH'])
         assert self.inst == res
@@ -466,6 +466,14 @@ class TestFileUtil(object):
         assert not fu._filters[0]('./test/data/HASH')
         assert fu._filters[0]('./test/data/config')
 
+    def test_where_name_does_not_match(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.where_name_does_not_match('.*\.gz')
+        eq_(1, len(fu._filters))
+        assert fu._filters[0]('./test/data/HASH.zip')
+        assert not fu._filters[0]('./test/data/HASH.gz')
+
     def test_where_name_matches(self):
         fu = FileUtil(self.builder)
         eq_(0, len(fu._filters))
@@ -473,6 +481,23 @@ class TestFileUtil(object):
         eq_(1, len(fu._filters))
         assert fu._filters[0]('./test/data/HASH.gz')
         assert not fu._filters[0]('./test/data/HASH.zip')
+
+    def test_where_name_is(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.where_name_is('HASH.gz')
+        eq_(1, len(fu._filters))
+        assert fu._filters[0]('./test/data/HASH.gz')
+        assert not fu._filters[0]('./test/data/HASH.zip')
+
+    def test_where_name_is_not(self):
+        fu = FileUtil(self.builder)
+        eq_(0, len(fu._filters))
+        fu.where_name_is_not('HASH.gz')
+        eq_(1, len(fu._filters))
+        assert not fu._filters[0]('./test/data/HASH.gz')
+        assert fu._filters[0]('./test/data/HASH.zip')
+        assert fu._filters[0]('./test/data/junk')
 
     def test_under(self):
         fu = FileUtil(self.builder)
@@ -564,6 +589,64 @@ class TestFileUtil(object):
                 shutil.rmtree(tmp1)
             if os.path.exists(tmp2):
                 shutil.rmtree(tmp2)
+
+    def test_done_with_filters(self):
+        tmp = os.path.join(tempfile.gettempdir(), 'test_done_works')
+        try:
+            fu = FileUtil(self.builder)
+            fu.under('./test/data')
+            fu.into(tmp)
+            fu.any_true()
+            fu.where_name_is('HASH')
+            fu.where_name_is('HASH.zip')
+            fu.where_name_is('options.json')
+            fu.done()
+            eq_(5, len(os.listdir(tmp)))
+            assert os.path.exists(tmp + '/HASH')
+            assert os.path.isfile(tmp + '/HASH')
+            assert os.path.exists(tmp + '/HASH.zip')
+            assert os.path.isfile(tmp + '/HASH.zip')
+            assert os.path.exists(tmp + '/options.json')
+            assert os.path.isfile(tmp + '/options.json')
+            assert os.path.exists(tmp + '/config')
+            assert os.path.isdir(tmp + '/config')
+            assert os.path.exists(tmp + '/config/options.json')
+            assert os.path.isfile(tmp + '/config/options.json')
+            eq_(1, len(os.listdir(tmp + '/config')))
+            assert os.path.exists(tmp + '/defaults')
+            assert os.path.isdir(tmp + '/defaults')
+            assert os.path.exists(tmp + '/defaults/options.json')
+            assert os.path.isfile(tmp + '/defaults/options.json')
+            eq_(1, len(os.listdir(tmp + '/defaults')))
+        finally:
+            if os.path.exists(tmp):
+                shutil.rmtree(tmp)
+
+    def test_done_with_more_filters(self):
+        tmp = os.path.join(tempfile.gettempdir(), 'test_done_works')
+        try:
+            fu = FileUtil(self.builder)
+            fu.under('./test/data')
+            fu.into(tmp)
+            fu.all_true()
+            fu.where_name_is_not('HASH')
+            fu.where_name_is_not('HASH.zip')
+            fu.where_name_is_not('options.json')
+            fu.where_name_is_not('.DS_Store')
+            fu.where_name_is_not('junk.xml')
+            fu.where_name_does_not_match('^.*plugins.*$')
+            fu.where_name_does_not_match('^.*HASH.*$')
+            fu.done()
+            eq_(3, len(os.listdir(tmp)))
+            assert os.path.exists(tmp + '/config.json')
+            assert os.path.exists(tmp + '/modules.txt')
+            assert os.path.exists(tmp + '/app')
+            assert os.path.isdir(tmp + '/app')
+            eq_(1, len(os.listdir(tmp + '/app')))
+            assert os.path.exists(tmp + '/app/cache-test.txt')
+        finally:
+            if os.path.exists(tmp):
+                shutil.rmtree(tmp)
 
 
 class TestRunner(object):
