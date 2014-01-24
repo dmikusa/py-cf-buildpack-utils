@@ -648,6 +648,50 @@ class TestFileUtil(object):
             if os.path.exists(tmp):
                 shutil.rmtree(tmp)
 
+    def test_done_move_with_filters(self):
+        tmp1 = os.path.join(tempfile.gettempdir(), 'test_done_works_1')
+        tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
+        try:
+            shutil.copytree('./test/data', tmp1)
+            eq_(18, len(os.listdir(tmp1)))
+            fu = FileUtil(self.builder, move=True)
+            fu.under(tmp1)
+            fu.into(tmp2)
+            fu.any_true()
+            fu.where_name_is('HASH')
+            fu.where_name_is('HASH.zip')
+            fu.where_name_is('options.json')
+            fu.done()
+            # Confirm these files were skipped
+            eq_(15, len(os.listdir(tmp1)))
+            assert os.path.exists(tmp1 + '/HASH.gz')
+            assert os.path.exists(tmp1 + '/app')
+            assert os.path.exists(tmp1 + '/config/junk.xml')
+            assert os.path.exists(tmp1 + '/defaults/junk.xml')
+            # Confirm these files were moved
+            eq_(5, len(os.listdir(tmp2)))
+            assert os.path.exists(tmp2 + '/HASH')
+            assert os.path.isfile(tmp2 + '/HASH')
+            assert os.path.exists(tmp2 + '/HASH.zip')
+            assert os.path.isfile(tmp2 + '/HASH.zip')
+            assert os.path.exists(tmp2 + '/options.json')
+            assert os.path.isfile(tmp2 + '/options.json')
+            assert os.path.exists(tmp2 + '/config')
+            assert os.path.isdir(tmp2 + '/config')
+            assert os.path.exists(tmp2 + '/config/options.json')
+            assert os.path.isfile(tmp2 + '/config/options.json')
+            eq_(1, len(os.listdir(tmp2 + '/config')))
+            assert os.path.exists(tmp2 + '/defaults')
+            assert os.path.isdir(tmp2 + '/defaults')
+            assert os.path.exists(tmp2 + '/defaults/options.json')
+            assert os.path.isfile(tmp2 + '/defaults/options.json')
+            eq_(1, len(os.listdir(tmp2 + '/defaults')))
+        finally:
+            if os.path.exists(tmp1):
+                shutil.rmtree(tmp1)
+            if os.path.exists(tmp2):
+                shutil.rmtree(tmp2)
+
 
 class TestRunner(object):
     def __init__(self):
