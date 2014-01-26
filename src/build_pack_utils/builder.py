@@ -312,6 +312,15 @@ class ConfigInstaller(object):
         self._to_path = toPath.format(**self._ctx)
         return self
 
+    def rewrite(self, cfgPath):
+        for file_name in os.listdir(cfgPath):
+            cfg_path = os.path.join(cfgPath, file_name)
+            lines = open(cfg_path).readlines()
+            with open(cfg_path, 'wt') as out:
+                for line in lines:
+                    out.write(line.format(**self._ctx))
+        return self
+
     def done(self):
         if (self._bp_path or self._app_path) and self._to_path:
             if self._bp_path:

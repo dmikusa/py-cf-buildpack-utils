@@ -269,7 +269,9 @@ class TestConfigInstaller(object):
             'BUILD_DIR': 'test/data/',
             'CACHE_DIR': '/tmp/cache',
             'BP_DIR': 'test/data/',
-            'VERSION': '1.0.0'
+            'VERSION': '1.0.0',
+            'HOME': '/home/user',
+            'TMPDIR': '/tmp'
         }
         self.cfInst = Dingus()
         self.builder = Dingus(_ctx=self.ctx)
@@ -307,6 +309,21 @@ class TestConfigInstaller(object):
         res = self.cfgInst.from_build_pack('some/{VERSION}')
         eq_(self.cfgInst, res)
         eq_('some/1.0.0', self.cfgInst._bp_path)
+
+    def test_rewrite(self):
+        cfg_path = os.path.join(tempfile.gettempdir(), 'conf')
+        cfg_file = os.path.join(tempfile.gettempdir(), 'conf', 'test-cfg.txt')
+        try:
+            os.makedirs(cfg_path)
+            shutil.copy('test/data/test.cfg', cfg_file)
+            res = self.cfgInst.rewrite(cfg_path)
+            eq_(self.cfgInst, res)
+            lines = open(cfg_file).readlines()
+            eq_(2, len(lines))
+            eq_('/home/user/test.cfg\n', lines[0])
+            eq_('/tmp/some-file.txt\n', lines[1])
+        finally:
+            shutil.rmtree(cfg_path)
 
     def test_done_nothing(self):
         res = self.cfgInst.done()
@@ -558,7 +575,7 @@ class TestFileUtil(object):
             fu.under('./test/data')
             fu.into(tmp)
             fu.done()
-            eq_(18, len(os.listdir(tmp)))
+            eq_(19, len(os.listdir(tmp)))
             assert os.path.exists(tmp + '/HASH')
             assert os.path.isfile(tmp + '/HASH')
             assert os.path.exists(tmp + '/config')
@@ -572,13 +589,13 @@ class TestFileUtil(object):
         tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
         try:
             shutil.copytree('./test/data', tmp1)
-            eq_(18, len(os.listdir(tmp1)))
+            eq_(19, len(os.listdir(tmp1)))
             fu = FileUtil(self.builder, move=True)
             fu.under(tmp1)
             fu.into(tmp2)
             fu.done()
             eq_(0, len(os.listdir(tmp1)))
-            eq_(18, len(os.listdir(tmp2)))
+            eq_(19, len(os.listdir(tmp2)))
             assert os.path.exists(tmp2 + '/HASH')
             assert os.path.isfile(tmp2 + '/HASH')
             assert os.path.exists(tmp2 + '/config')
@@ -637,7 +654,7 @@ class TestFileUtil(object):
             fu.where_name_does_not_match('^.*plugins.*$')
             fu.where_name_does_not_match('^.*HASH.*$')
             fu.done()
-            eq_(3, len(os.listdir(tmp)))
+            eq_(4, len(os.listdir(tmp)))
             assert os.path.exists(tmp + '/config.json')
             assert os.path.exists(tmp + '/modules.txt')
             assert os.path.exists(tmp + '/app')
@@ -653,7 +670,7 @@ class TestFileUtil(object):
         tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
         try:
             shutil.copytree('./test/data', tmp1)
-            eq_(18, len(os.listdir(tmp1)))
+            eq_(19, len(os.listdir(tmp1)))
             fu = FileUtil(self.builder, move=True)
             fu.under(tmp1)
             fu.into(tmp2)
@@ -663,7 +680,7 @@ class TestFileUtil(object):
             fu.where_name_is('options.json')
             fu.done()
             # Confirm these files were skipped
-            eq_(15, len(os.listdir(tmp1)))
+            eq_(16, len(os.listdir(tmp1)))
             assert os.path.exists(tmp1 + '/HASH.gz')
             assert os.path.exists(tmp1 + '/app')
             assert os.path.exists(tmp1 + '/config/junk.xml')
