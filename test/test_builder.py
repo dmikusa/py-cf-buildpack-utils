@@ -311,19 +311,25 @@ class TestConfigInstaller(object):
         eq_('some/1.0.0', self.cfgInst._bp_path)
 
     def test_rewrite(self):
-        cfg_path = os.path.join(tempfile.gettempdir(), 'conf')
-        cfg_file = os.path.join(tempfile.gettempdir(), 'conf', 'test-cfg.txt')
+        eq_(False, self.cfgInst._rewrite)
+        res = self.cfgInst.rewrite()
+        eq_(self.cfgInst, res)
+        eq_(True, self.cfgInst._rewrite)
+
+    def test_rewrite_cfgs(self):
+        cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
+        cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
         try:
-            os.makedirs(cfg_path)
-            shutil.copy('test/data/test.cfg', cfg_file)
-            res = self.cfgInst.rewrite(cfg_path)
-            eq_(self.cfgInst, res)
-            lines = open(cfg_file).readlines()
+            os.makedirs(cfgPath)
+            shutil.copy('test/data/test.cfg', cfgFile)
+            self.cfgInst.to(cfgPath)
+            self.cfgInst._rewrite_cfgs()
+            lines = open(cfgFile).readlines()
             eq_(2, len(lines))
             eq_('/home/user/test.cfg\n', lines[0])
             eq_('/tmp/some-file.txt\n', lines[1])
         finally:
-            shutil.rmtree(cfg_path)
+            shutil.rmtree(cfgPath)
 
     def test_done_nothing(self):
         res = self.cfgInst.done()
@@ -347,6 +353,19 @@ class TestConfigInstaller(object):
         assert 2 == len(self.cfInst.calls()[0].args)
         eq_('some/file.txt', self.cfInst.calls()[0].args[0])
         eq_('some/other/file.txt', self.cfInst.calls()[0].args[1])
+
+    def test_done_single_bp_rewrite(self):
+        self.cfgInst._rewrite_cfgs = Dingus()
+        self.cfgInst.from_build_pack('some/file.txt')
+        self.cfgInst.to('some/other/file.txt')
+        self.cfgInst.rewrite()
+        res = self.cfgInst.done()
+        assert res is self.inst
+        eq_('install_from_build_pack', self.cfInst.calls()[0].name)
+        eq_(2, len(self.cfInst.calls()[0].args))
+        eq_('some/file.txt', self.cfInst.calls()[0].args[0])
+        eq_('some/other/file.txt', self.cfInst.calls()[0].args[1])
+        eq_(1, len(self.cfgInst._rewrite_cfgs.calls()))
 
     def test_done_single_app(self):
         self.cfgInst.from_application('some/file.txt')
