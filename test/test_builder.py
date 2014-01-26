@@ -1196,6 +1196,13 @@ class TestEnvironmentVariableBuilder(object):
         assert res is self.ssb
         eq_('TEST=1234', self.ssb.calls()[0].args[0])
 
+    def test_value_string_formatted(self):
+        evb = EnvironmentVariableBuilder(self.ssb)
+        evb.name('TEST')
+        res = evb.value('test/{VAL}')
+        assert res is self.ssb
+        eq_('TEST=test/1234', self.ssb.calls()[0].args[0])
+
     def test_value_config(self):
         evb = EnvironmentVariableBuilder(self.ssb)
         evb.name('TEST')
