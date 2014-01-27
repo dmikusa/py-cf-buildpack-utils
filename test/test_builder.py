@@ -325,9 +325,10 @@ class TestConfigInstaller(object):
             self.cfgInst.to(cfgPath)
             self.cfgInst._rewrite_cfgs()
             lines = open(cfgFile).readlines()
-            eq_(2, len(lines))
+            eq_(3, len(lines))
             eq_('/home/user/test.cfg\n', lines[0])
             eq_('/tmp/some-file.txt\n', lines[1])
+            eq_('${DOESNOTEXIST}\n', lines[2])
         finally:
             shutil.rmtree(cfgPath)
 
