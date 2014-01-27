@@ -311,24 +311,54 @@ class TestConfigInstaller(object):
         eq_('some/1.0.0', self.cfgInst._bp_path)
 
     def test_rewrite(self):
-        eq_(False, self.cfgInst._rewrite)
+        eq_(None, self.cfgInst._rewrite)
         res = self.cfgInst.rewrite()
         eq_(self.cfgInst, res)
-        eq_(True, self.cfgInst._rewrite)
+        eq_('#', self.cfgInst._rewrite)
+        res = self.cfgInst.rewrite(runtime=True)
+        eq_(self.cfgInst, res)
+        eq_('@', self.cfgInst._rewrite)
+        res = self.cfgInst.rewrite(runtime=False)
+        eq_(self.cfgInst, res)
+        eq_('#', self.cfgInst._rewrite)
 
-    def test_rewrite_cfgs(self):
+    def test_rewrite_cfgs_compile(self):
         cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
         cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
         try:
             os.makedirs(cfgPath)
             shutil.copy('test/data/test.cfg', cfgFile)
             self.cfgInst.to(cfgPath)
+            self.cfgInst.rewrite(runtime=False)
             self.cfgInst._rewrite_cfgs()
             lines = open(cfgFile).readlines()
-            eq_(3, len(lines))
+            eq_(6, len(lines))
             eq_('/home/user/test.cfg\n', lines[0])
+            eq_('@{TMPDIR}/some-file.txt\n', lines[1])
+            eq_('${TMPDIR}\n', lines[2])
+            eq_('#{DNE}/test.txt\n', lines[3])
+            eq_('@{DNE}/test.txt\n', lines[4])
+            eq_('${DNE}/test.txt\n', lines[5])
+        finally:
+            shutil.rmtree(cfgPath)
+
+    def test_rewrite_cfgs_runtime(self):
+        cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
+        cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
+        try:
+            os.makedirs(cfgPath)
+            shutil.copy('test/data/test.cfg', cfgFile)
+            self.cfgInst.to(cfgPath)
+            self.cfgInst.rewrite(runtime=True)
+            self.cfgInst._rewrite_cfgs()
+            lines = open(cfgFile).readlines()
+            eq_(6, len(lines))
+            eq_('#{HOME}/test.cfg\n', lines[0])
             eq_('/tmp/some-file.txt\n', lines[1])
-            eq_('${DOESNOTEXIST}\n', lines[2])
+            eq_('${TMPDIR}\n', lines[2])
+            eq_('#{DNE}/test.txt\n', lines[3])
+            eq_('@{DNE}/test.txt\n', lines[4])
+            eq_('${DNE}/test.txt\n', lines[5])
         finally:
             shutil.rmtree(cfgPath)
 
