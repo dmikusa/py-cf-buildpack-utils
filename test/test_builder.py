@@ -265,14 +265,15 @@ class TestInstaller(object):
 
 class TestConfigInstaller(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': 'test/data/',
             'CACHE_DIR': '/tmp/cache',
             'BP_DIR': 'test/data/',
             'VERSION': '1.0.0',
             'HOME': '/home/user',
-            'TMPDIR': '/tmp'
-        }
+            'TMPDIR': '/tmp',
+            'SOMEPATH': '{TMPDIR}/path'
+        })
         self.cfInst = Dingus()
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Installer(self.builder)
@@ -319,6 +320,18 @@ class TestConfigInstaller(object):
         eq_(self.cfgInst, res)
         eq_('@', self.cfgInst._delimiter)
 
+    def assert_cfg_std(self, path):
+        lines = open(path).readlines()
+        eq_(8, len(lines))
+        eq_('/home/user/test.cfg\n', lines[0])
+        eq_('@{TMPDIR}/some-file.txt\n', lines[1])
+        eq_('${TMPDIR}\n', lines[2])
+        eq_('#{DNE}/test.txt\n', lines[3])
+        eq_('@{DNE}/test.txt\n', lines[4])
+        eq_('${DNE}/test.txt\n', lines[5])
+        eq_('/tmp/path\n', lines[6])
+        eq_('@{SOMEPATH}\n', lines[7])
+
     def test_rewrite_cfgs_compile(self):
         cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
         cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
@@ -331,22 +344,8 @@ class TestConfigInstaller(object):
             self.cfgInst.to(cfgPath)
             self.cfgInst.rewrite()
             self.cfgInst._rewrite_cfgs()
-            lines = open(cfgFile).readlines()
-            eq_(6, len(lines))
-            eq_('/home/user/test.cfg\n', lines[0])
-            eq_('@{TMPDIR}/some-file.txt\n', lines[1])
-            eq_('${TMPDIR}\n', lines[2])
-            eq_('#{DNE}/test.txt\n', lines[3])
-            eq_('@{DNE}/test.txt\n', lines[4])
-            eq_('${DNE}/test.txt\n', lines[5])
-            lines = open(nestedFile).readlines()
-            eq_(6, len(lines))
-            eq_('/home/user/test.cfg\n', lines[0])
-            eq_('@{TMPDIR}/some-file.txt\n', lines[1])
-            eq_('${TMPDIR}\n', lines[2])
-            eq_('#{DNE}/test.txt\n', lines[3])
-            eq_('@{DNE}/test.txt\n', lines[4])
-            eq_('${DNE}/test.txt\n', lines[5])
+            self.assert_cfg_std(cfgFile)
+            self.assert_cfg_std(nestedFile)
         finally:
             shutil.rmtree(cfgPath)
 
@@ -360,13 +359,15 @@ class TestConfigInstaller(object):
             self.cfgInst.rewrite(delimiter='@')
             self.cfgInst._rewrite_cfgs()
             lines = open(cfgFile).readlines()
-            eq_(6, len(lines))
+            eq_(8, len(lines))
             eq_('#{HOME}/test.cfg\n', lines[0])
             eq_('/tmp/some-file.txt\n', lines[1])
             eq_('${TMPDIR}\n', lines[2])
             eq_('#{DNE}/test.txt\n', lines[3])
             eq_('@{DNE}/test.txt\n', lines[4])
             eq_('${DNE}/test.txt\n', lines[5])
+            eq_('#{SOMEPATH}\n', lines[6])
+            eq_('/tmp/path\n', lines[7])
         finally:
             shutil.rmtree(cfgPath)
 
