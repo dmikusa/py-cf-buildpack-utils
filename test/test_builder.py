@@ -574,6 +574,8 @@ class TestFileUtil(object):
         eq_('/tmp/build_dir', fu._from_path)
         fu.under('test/data')
         eq_(os.path.join(os.getcwd(), 'test/data'), fu._from_path)
+        fu.under('{BUILD_DIR}/php')
+        eq_('/tmp/build_dir/php', fu._from_path)
 
     def test_into(self):
         fu = FileUtil(self.builder)
@@ -584,6 +586,8 @@ class TestFileUtil(object):
         eq_('/tmp/data/new', fu._into_path)
         fu.into('/tmp/test')
         eq_('/tmp/test', fu._into_path)
+        fu.into('{BUILD_DIR}/php')
+        eq_('/tmp/build_dir/php', fu._into_path)
 
     def test_done_src_and_dest_match(self):
         fu = FileUtil(self.builder)
