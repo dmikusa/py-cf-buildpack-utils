@@ -322,12 +322,13 @@ class ConfigInstaller(object):
         class RewriteTemplate(Template):
             delimiter = self._rewrite
         toPath = os.path.join(self._ctx['BUILD_DIR'], self._to_path)
-        for fileName in os.listdir(toPath):
-            cfgPath = os.path.join(toPath, fileName)
-            with open(cfgPath) as fin:
-                data = fin.read()
-            with open(cfgPath, 'wt') as out:
-                out.write(RewriteTemplate(data).safe_substitute(**self._ctx))
+        for root, dirs, files in os.walk(toPath):
+            for f in files:
+                cfgPath = os.path.join(root, f)
+                with open(cfgPath) as fin:
+                    data = fin.read()
+                with open(cfgPath, 'wt') as out:
+                    out.write(RewriteTemplate(data).safe_substitute(**self._ctx))
 
     def done(self):
         if (self._bp_path or self._app_path) and self._to_path:
