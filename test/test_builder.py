@@ -311,16 +311,13 @@ class TestConfigInstaller(object):
         eq_('some/1.0.0', self.cfgInst._bp_path)
 
     def test_rewrite(self):
-        eq_(None, self.cfgInst._rewrite)
+        eq_(None, self.cfgInst._delimiter)
         res = self.cfgInst.rewrite()
         eq_(self.cfgInst, res)
-        eq_('#', self.cfgInst._rewrite)
-        res = self.cfgInst.rewrite(runtime=True)
+        eq_('#', self.cfgInst._delimiter)
+        res = self.cfgInst.rewrite(delimiter='@')
         eq_(self.cfgInst, res)
-        eq_('@', self.cfgInst._rewrite)
-        res = self.cfgInst.rewrite(runtime=False)
-        eq_(self.cfgInst, res)
-        eq_('#', self.cfgInst._rewrite)
+        eq_('@', self.cfgInst._delimiter)
 
     def test_rewrite_cfgs_compile(self):
         cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
@@ -332,7 +329,7 @@ class TestConfigInstaller(object):
             shutil.copy('test/data/test.cfg', cfgFile)
             shutil.copy('test/data/test.cfg', nestedFile)
             self.cfgInst.to(cfgPath)
-            self.cfgInst.rewrite(runtime=False)
+            self.cfgInst.rewrite()
             self.cfgInst._rewrite_cfgs()
             lines = open(cfgFile).readlines()
             eq_(6, len(lines))
@@ -353,14 +350,14 @@ class TestConfigInstaller(object):
         finally:
             shutil.rmtree(cfgPath)
 
-    def test_rewrite_cfgs_runtime(self):
+    def test_rewrite_cfgs_delimiter(self):
         cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
         cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
         try:
             os.makedirs(cfgPath)
             shutil.copy('test/data/test.cfg', cfgFile)
             self.cfgInst.to(cfgPath)
-            self.cfgInst.rewrite(runtime=True)
+            self.cfgInst.rewrite(delimiter='@')
             self.cfgInst._rewrite_cfgs()
             lines = open(cfgFile).readlines()
             eq_(6, len(lines))
