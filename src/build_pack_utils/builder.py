@@ -324,11 +324,10 @@ class ConfigInstaller(object):
         toPath = os.path.join(self._ctx['BUILD_DIR'], self._to_path)
         for fileName in os.listdir(toPath):
             cfgPath = os.path.join(toPath, fileName)
-            lines = open(cfgPath).readlines()
+            with open(cfgPath) as fin:
+                data = fin.read()
             with open(cfgPath, 'wt') as out:
-                for line in lines:
-                    out.write(
-                        RewriteTemplate(line).safe_substitute(**self._ctx))
+                out.write(RewriteTemplate(data).safe_substitute(**self._ctx))
 
     def done(self):
         if (self._bp_path or self._app_path) and self._to_path:
