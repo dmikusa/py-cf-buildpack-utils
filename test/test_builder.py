@@ -611,17 +611,6 @@ class TestFileUtil(object):
             eq_('Source path [/tmp/data] does not exist',
                 e.args[0])
 
-    def test_done_dst_already_exists(self):
-        fu = FileUtil(self.builder)
-        fu.under('./test/data')
-        fu.into('/tmp')
-        try:
-            fu.done()
-            assert False
-        except ValueError, e:
-            eq_('Destination path [/tmp] already exists',
-                e.args[0])
-
     def test_done_works_copy(self):
         tmp = os.path.join(tempfile.gettempdir(), 'test_done_works')
         try:
