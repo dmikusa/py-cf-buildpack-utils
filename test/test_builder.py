@@ -23,7 +23,6 @@ from build_pack_utils import BuildPackManager
 from build_pack_utils import ExtensionInstaller
 from build_pack_utils import ModuleInstaller
 from build_pack_utils import utils
-from build_pack_utils import ExtensionScriptBuilder
 
 
 class TestConfigurer(object):
@@ -935,7 +934,8 @@ class TestStartScriptBuilder(object):
     def __init__(self):
         self.ctx = {
             'BUILD_DIR': tempfile.gettempdir(),
-            'BP_DIR': '/tmp/build_dir'
+            'BP_DIR': '/tmp/build_dir',
+            'EXTENSIONS': []
         }
         self.builder = Dingus(_ctx=self.ctx)
 
@@ -955,6 +955,23 @@ class TestStartScriptBuilder(object):
             assert data.find('ls -la') >= 0
             assert data.find('echo') >= 0
             assert data.find('1234') >= 0
+        finally:
+            if expectedFile and os.path.exists(expectedFile):
+                os.remove(expectedFile)
+
+    def test_with_extension(self):
+        self.ctx['EXTENSIONS'].append(
+            os.path.abspath('test/data/plugins/test1'))
+        b = StartScriptBuilder(self.builder)
+        expectedFile = None
+        try:
+            b.write()
+            expectedFile = os.path.join(tempfile.gettempdir(),
+                                        'start.sh')
+            assert os.path.exists(expectedFile)
+            eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
+            data = open(expectedFile, 'rt').read()
+            assert data.find('ls -l') >= 0
         finally:
             if expectedFile and os.path.exists(expectedFile):
                 os.remove(expectedFile)
@@ -1012,86 +1029,6 @@ class TestStartScriptBuilder(object):
         eq_('ls -lath', ssb.content[2])
         eq_('ps aux | grep catalina', ssb.content[3])
         eq_('start.sh &', ssb.content[4])
-
-
-class TestExtensionScriptBuilder(object):
-    def __init__(self):
-        self.ctx = {
-            'BUILD_DIR': tempfile.gettempdir(),
-            'BP_DIR': '/tmp/build_dir',
-            'PLUGIN_PATH': 'test/data/plugins'
-        }
-        self.builder = Dingus(_ctx=self.ctx)
-        self.ssb = Dingus(builder=self.builder)
-
-    def test_from_path_none(self):
-        esb = ExtensionScriptBuilder(self.ssb)
-        eq_(0, len(esb._paths))
-        res = esb.from_path('test/data')
-        eq_(esb, res)
-        eq_(0, len(esb._paths))
-
-    def test_from_path_single(self):
-        esb = ExtensionScriptBuilder(self.ssb)
-        eq_(0, len(esb._paths))
-        res = esb.from_path('test/data/plugins/test1')
-        eq_(esb, res)
-        eq_(1, len(esb._paths))
-        eq_(os.path.join(os.getcwd(),
-                         'test/data/plugins/test1'),
-                         esb._paths[0])
-
-    def test_from_path_multiple(self):
-        cwd = os.getcwd()
-        path = 'test/data/plugins'
-        esb = ExtensionScriptBuilder(self.ssb)
-        eq_(0, len(esb._paths))
-        res = esb.from_path(path)
-        eq_(esb, res)
-        eq_(3, len(esb._paths))
-        eq_(True, os.path.join(cwd, path, 'test1') in esb._paths)
-        eq_(True, os.path.join(cwd, path, 'test2') in esb._paths)
-        eq_(True, os.path.join(cwd, path, 'test3') in esb._paths)
-
-    def test_from_path_format(self):
-        esb = ExtensionScriptBuilder(self.ssb)
-        eq_(0, len(esb._paths))
-        res = esb.from_path('{PLUGIN_PATH}/test1')
-        eq_(esb, res)
-        eq_(1, len(esb._paths))
-        eq_(os.path.join(os.getcwd(),
-                         'test/data/plugins/test1'),
-                         esb._paths[0])
-
-    def test_ignore_errors(self):
-        esb = ExtensionScriptBuilder(self.ssb)
-        eq_(True, esb._ignore)
-        res = esb.ignore_errors(True)
-        eq_(esb, res)
-        eq_(True, esb._ignore)
-        esb.ignore_errors(False)
-        eq_(False, esb._ignore)
-
-    def test_load_extension(self):
-        esb = ExtensionScriptBuilder(self.ssb)
-        test1 = esb._load_extension('test/data/plugins/test1')
-        eq_(0, test1.setup_start_script(self.ssb))
-        test2 = esb._load_extension('test/data/plugins/test2')
-        eq_(-1, test2.setup_start_script(self.ssb))
-
-    def test_done(self):
-        extn = Dingus(setup_start_script=Dingus(return_value=0))
-        esb = ExtensionScriptBuilder(self.ssb)
-        esb._load_extension = Dingus(return_value=extn)
-        esb.from_path('test/data/plugins/test1')
-        res = esb.done()
-        eq_(self.ssb, res)
-        eq_(1, len(esb._load_extension.calls()))
-        eq_(os.path.join(os.getcwd(), 'test/data/plugins/test1'),
-            esb._load_extension.calls()[0].args[0])
-        eq_(1, len(extn.setup_start_script.calls()))
-        eq_(0, extn.setup_start_script.calls()[0].return_value)
-        eq_(self.ssb, extn.setup_start_script.calls()[0].args[0])
 
 
 class TestScriptCommandBuilder(object):
@@ -1369,13 +1306,6 @@ class TestExtensionInstaller(object):
         }
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Dingus(builder=self.builder)
-
-    def test_load_extension(self):
-        ei = ExtensionInstaller(self.inst)
-        test1 = ei._load_extension('test/data/plugins/test1')
-        eq_(0, test1.compile(self.inst))
-        test2 = ei._load_extension('test/data/plugins/test2')
-        eq_(-1, test2.compile(self.inst))
 
     def test_from_location(self):
         ei = ExtensionInstaller(self.inst)
