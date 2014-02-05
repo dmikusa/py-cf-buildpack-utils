@@ -1,11 +1,11 @@
 def preprocess_commands(ctx):
-    return (('ls', '-l'),)
+    return (('echo', '"Wheee"'),)
 
-def service_command(ctx):
-    return ('sleep', '1')
+def service_commands(ctx):
+    return {'server': ('sleep', '2')}
 
 def service_environment(ctx):
-    return {'TEST_ENV': '1234'}
+    return {'TEST_ENV': '4321'}
 
 def compile(installer):
     print 'Fail :('

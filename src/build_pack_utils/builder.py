@@ -21,6 +21,18 @@ def _load_extension(path):
     return imp.load_module('extension', *info)
 
 
+def _process_extensions(ctx, to_call, success, ignore=False):
+    for path in ctx['EXTENSIONS']:
+        extn = _load_extension(path)
+        try:
+            if hasattr(extn, to_call):
+                success(getattr(extn, to_call)(ctx))
+        except Exception, e:
+            print "Error with extension [%s] [%s]" % (path, str(e))
+            if not ignore:
+                raise e
+
+
 def log_output(cmd, retcode, stdout, stderr):
     print 'Comand %s completed with [%d]' % (str(cmd), retcode)
     if stdout:
@@ -745,6 +757,32 @@ class BuildPackManager(object):
         return self._builder
 
 
+class SaveBuilder(object):
+    def __init__(self, builder):
+        self._builder = builder
+
+    def runtime_environment(self):
+        def process(env):
+            envPath = os.path.join(self._builder._ctx['BUILD_DIR'], '.env')
+            with open(envPath, 'at') as envFile:
+                for key,val in env.iteritems():
+                    envFile.write("%s=%s\n" % (key, val))
+        _process_extensions(self._builder._ctx, 'service_environment', process)
+        return self
+
+    def process_list(self):
+        def process(cmds):
+            procPath = os.path.join(self._builder._ctx['BUILD_DIR'], '.procs')
+            with open(procPath, 'at') as procFile:
+                for name, cmd in cmds.iteritems():
+                    procFile.write("%s: %s\n" % (name, ' '.join(cmd)))
+        _process_extensions(self._builder._ctx, 'service_commands', process)
+        return self
+
+    def done(self):
+        return self._builder
+
+
 class Builder(object):
     def __init__(self):
         self._installer = None
@@ -774,6 +812,9 @@ class Builder(object):
 
     def move(self):
         return FileUtil(self, move=True)
+
+    def save(self):
+        return SaveBuilder(self)
 
     def release(self):
         print 'default_process_types:'

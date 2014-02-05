@@ -22,6 +22,7 @@ from build_pack_utils import FileUtil
 from build_pack_utils import BuildPackManager
 from build_pack_utils import ExtensionInstaller
 from build_pack_utils import ModuleInstaller
+from build_pack_utils import SaveBuilder
 from build_pack_utils import utils
 
 
@@ -1459,3 +1460,44 @@ class TestModuleInstaller(object):
             eq_('pattern/%s.sha1' % mod, call.args[1])
             eq_('test/data/local', call.args[2])
             eq_(False, call.args[3])
+
+
+class TestSaveBuilder(object):
+    def setUp(self):
+        self.ctx = {
+            'BUILD_DIR': os.path.join(tempfile.gettempdir(), 'save-builder'),
+            'EXTENSIONS': [os.path.abspath('test/data/plugins/test1'),
+                           os.path.abspath('test/data/plugins/test2')]
+        }
+        self.builder = Dingus(_ctx=self.ctx)
+        os.makedirs(self.ctx['BUILD_DIR'])
+
+    def tearDown(self):
+        if os.path.exists(self.ctx['BUILD_DIR']):
+            shutil.rmtree(self.ctx['BUILD_DIR'])
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_runtime_environment(self):
+        sb = SaveBuilder(self.builder)
+        res = sb.runtime_environment()
+        eq_(sb, res)
+        envFile = os.path.join(self.ctx['BUILD_DIR'], '.env')
+        eq_(True, os.path.exists(envFile))
+        with open(envFile, 'rt') as f:
+            lines = f.readlines()
+            eq_(2, len(lines))
+            eq_('TEST_ENV=1234\n', lines[0])
+            eq_('TEST_ENV=4321\n', lines[1])
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_process_list(self):
+        sb = SaveBuilder(self.builder)
+        res = sb.process_list()
+        eq_(sb, res)
+        procFile = os.path.join(self.ctx['BUILD_DIR'], '.procs')
+        eq_(True, os.path.exists(procFile))
+        with open(procFile, 'rt') as f:
+            lines = f.readlines()
+            eq_(2, len(lines))
+            eq_('server: sleep 1\n', lines[0])
+            eq_('server: sleep 2\n', lines[1])
