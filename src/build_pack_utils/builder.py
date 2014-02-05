@@ -281,6 +281,7 @@ class ExtensionInstaller(object):
                 retcode = extn.compile(self._installer)
                 if retcode != 0:
                     raise RuntimeError('Extension Failed with [%s]' % retcode)
+                self._ctx['EXTENSIONS'].append(path)
             except Exception, e:
                 print "Error with extension [%s] [%s]" % (path, str(e))
                 if not self._ignore:

@@ -1364,7 +1364,8 @@ class TestExtensionInstaller(object):
             'BUILD_DIR': '/tmp/build_dir',
             'BP_DIR': '/tmp/bp_dir',
             'CACHE_DIR': '/tmp/cache_dir',
-            'PLUGIN': 'plugins'
+            'PLUGIN': 'plugins',
+            'EXTENSIONS': []
         }
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Dingus(builder=self.builder)
@@ -1393,6 +1394,15 @@ class TestExtensionInstaller(object):
         eq_(0, len(ei._paths))
         ei.from_path('test/data/{PLUGIN}')
         eq_(3, len(ei._paths))
+
+    def test_works(self):
+        ei = ExtensionInstaller(self.inst)
+        ei.from_path('test/data/plugins/test1')
+        eq_(0, len(self.ctx['EXTENSIONS']))
+        ei.done()
+        eq_(1, len(self.ctx['EXTENSIONS']))
+        eq_(os.path.abspath('test/data/plugins/test1'),
+            self.ctx['EXTENSIONS'][0])
 
     def test_fails_retcode(self):
         ei = ExtensionInstaller(self.inst)
