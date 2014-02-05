@@ -288,17 +288,11 @@ class ExtensionInstaller(object):
         return self
 
     def done(self):
-        for path in self._paths:
-            extn = _load_extension(path)
-            try:
-                retcode = extn.compile(self._installer)
-                if retcode != 0:
-                    raise RuntimeError('Extension Failed with [%s]' % retcode)
-                self._ctx['EXTENSIONS'].append(path)
-            except Exception, e:
-                print "Error with extension [%s] [%s]" % (path, str(e))
-                if not self._ignore:
-                    raise e
+        self._ctx['EXTENSIONS'].extend(self._paths)
+        def process(retcode):
+            if retcode != 0:
+                raise RuntimeError('Extension Failed with [%s]' % retcode)
+        _process_extensions(self._ctx, 'compile', process)
         return self._installer
 
 
