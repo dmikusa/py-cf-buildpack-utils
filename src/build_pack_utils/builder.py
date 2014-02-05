@@ -600,17 +600,10 @@ class StartScriptBuilder(object):
         return self
 
     def _process_extensions(self):
-        for path in self.builder._ctx['EXTENSIONS']:
-            extn = _load_extension(path)
-            try:
-                cmds = []
-                for cmd in extn.preprocess_commands(self.builder._ctx):
-                    cmds.append(' '.join(cmd))
-                self.content.extend(cmds)
-            except Exception, e:
-                print "Error with extension [%s] [%s]" % (path, str(e))
-                if not self._ignore:
-                    raise e
+        def process(cmds):
+            for cmd in cmds:
+                self.content.append(' '.join(cmd))
+        _process_extensions(self.builder._ctx, 'preprocess_commands', process)
 
     def write(self, wait_forever=False):
         self._process_extensions()
