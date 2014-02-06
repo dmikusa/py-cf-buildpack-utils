@@ -96,7 +96,7 @@ class ProcessManager(object):
         output of all the processes in this ProcessManager to sys.stdout, and
         will block until all the processes have completed.
 
-        If one process terminates, all the others will be terminated 
+        If one process terminates, all the others will be terminated
         and loop() will return.
 
         Returns: the returncode of the first process to exit, or 130 if
@@ -160,14 +160,16 @@ class ProcessManager(object):
         print("sending SIGTERM to all processes", file=self.system_printer)
         for proc in self.processes:
             if proc.poll() is None:
-                print("sending SIGTERM to pid {0:d}".format(proc.pid), file=self.system_printer)
+                print("sending SIGTERM to pid {0:d}".format(proc.pid),
+                      file=self.system_printer)
                 proc.terminate()
 
         def kill(signum, frame):
             # If anything is still alive, SIGKILL it
             for proc in self.processes:
                 if proc.poll() is None:
-                    print("sending SIGKILL to pid {0:d}".format(proc.pid), file=self.system_printer)
+                    print("sending SIGKILL to pid {0:d}".format(proc.pid),
+                          file=self.system_printer)
                     proc.kill()
 
         signal.signal(signal.SIGALRM, kill)  # @UndefinedVariable
@@ -183,7 +185,8 @@ class ProcessManager(object):
             t.start()
 
     def _init_printers(self):
-        width = max(len(p.name) for p in filter(lambda x: not x.quiet, self.processes))
+        width = max(len(p.name) for p in
+                    filter(lambda x: not x.quiet, self.processes))
         width = max(width, len(self.system_printer.name))
 
         self.system_printer.width = width
@@ -195,7 +198,9 @@ class ProcessManager(object):
 
     def _print_line(self, proc, line):
         if isinstance(line, UnicodeDecodeError):
-            print("UnicodeDecodeError while decoding line from process {0:s}".format(proc.name), file=self.system_printer)
+            print("UnicodeDecodeError while decoding line "
+                  "from process {0:s}".format(proc.name),
+                  file=self.system_printer)
         else:
             print(line, end='', file=proc.printer)
 

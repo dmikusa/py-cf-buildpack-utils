@@ -288,10 +288,10 @@ class ExtensionInstaller(object):
         return self
 
     def done(self):
-        self._ctx['EXTENSIONS'].extend(self._paths)
         def process(retcode):
             if retcode != 0:
                 raise RuntimeError('Extension Failed with [%s]' % retcode)
+        self._ctx['EXTENSIONS'].extend(self._paths)
         _process_extensions(self._ctx, 'compile', process)
         return self._installer
 
@@ -752,7 +752,7 @@ class SaveBuilder(object):
         def process(env):
             envPath = os.path.join(self._builder._ctx['BUILD_DIR'], '.env')
             with open(envPath, 'at') as envFile:
-                for key,val in env.iteritems():
+                for key, val in env.iteritems():
                     envFile.write("%s=%s\n" % (key, val))
         _process_extensions(self._builder._ctx, 'service_environment', process)
         return self
