@@ -1,9 +1,91 @@
 import os
 import shutil
 import tempfile
+from dingus import Dingus
 from nose.tools import eq_
 from nose.tools import with_setup
 from build_pack_utils import utils
+
+
+class TestLoadExtension(object):
+    def test_load_test1(self):
+        test1 = utils.load_extension('test/data/plugins/test1')
+        res = test1.service_environment({})
+        eq_('1234', res['TEST_ENV'])
+
+
+class TestProcessExtensions(object):
+    def test_process_extension(self):
+        process = Dingus()
+        ctx = {'EXTENSIONS': ['test/data/plugins/test1']}
+        utils.process_extensions(ctx, 'service_environment', process)
+        eq_(1, len(process.calls()))
+        eq_('1234', process.calls()[0].args[0]['TEST_ENV'])
+
+    def test_process_extensions(self):
+        process = Dingus()
+        ctx = {'EXTENSIONS': ['test/data/plugins/test1',
+                              'test/data/plugins/test2']}
+        utils.process_extensions(ctx, 'service_environment', process)
+        eq_(2, len(process.calls()))
+        eq_('1234', process.calls()[0].args[0]['TEST_ENV'])
+        eq_('4321', process.calls()[1].args[0]['TEST_ENV'])
+
+
+class TestRewriteCfgs(object):
+    def setUp(self):
+        self.cfgs = os.path.join(tempfile.gettempdir(), 'rewrite-cfgs')
+        os.makedirs(os.path.join(self.cfgs, 'subdir'))
+        shutil.copy('test/data/test.cfg', self.cfgs)
+        shutil.copy('test/data/test.cfg', os.path.join(self.cfgs, 'subdir'))
+
+    def tearDown(self):
+        if os.path.exists(self.cfgs):
+            shutil.rmtree(self.cfgs)
+
+    def assert_cfg_std(self, path):
+        lines = open(path).readlines()
+        eq_(8, len(lines))
+        eq_('/home/user/test.cfg\n', lines[0])
+        eq_('@{TMPDIR}/some-file.txt\n', lines[1])
+        eq_('${TMPDIR}\n', lines[2])
+        eq_('#{DNE}/test.txt\n', lines[3])
+        eq_('@{DNE}/test.txt\n', lines[4])
+        eq_('${DNE}/test.txt\n', lines[5])
+        eq_('/tmp/path\n', lines[6])
+        eq_('@{SOMEPATH}\n', lines[7])
+
+    def assert_cfg_custom(self, path):
+        lines = open(path).readlines()
+        eq_(8, len(lines))
+        eq_('#{HOME}/test.cfg\n', lines[0])
+        eq_('/tmp/some-file.txt\n', lines[1])
+        eq_('${TMPDIR}\n', lines[2])
+        eq_('#{DNE}/test.txt\n', lines[3])
+        eq_('@{DNE}/test.txt\n', lines[4])
+        eq_('${DNE}/test.txt\n', lines[5])
+        eq_('#{SOMEPATH}\n', lines[6])
+        eq_('/tmp/path\n', lines[7])
+
+    def test_rewrite_defaults(self):
+        ctx = utils.FormattedDict({
+            'TMPDIR': '/tmp',
+            'HOME': '/home/user',
+            'SOMEPATH': '{TMPDIR}/path'
+        })
+        utils.rewrite_cfgs(self.cfgs, ctx)
+        self.assert_cfg_std(os.path.join(self.cfgs, 'test.cfg'))
+        self.assert_cfg_std(os.path.join(self.cfgs, 'subdir', 'test.cfg'))
+
+    def test_rewrite_custom_delimiter(self):
+        ctx = utils.FormattedDict({
+            'TMPDIR': '/tmp',
+            'HOME': '/home/user',
+            'SOMEPATH': '{TMPDIR}/path'
+        })
+        utils.rewrite_cfgs(self.cfgs, ctx, delim='@')
+        self.assert_cfg_custom(os.path.join(self.cfgs, 'test.cfg'))
+        self.assert_cfg_custom(os.path.join(self.cfgs, 'subdir', 'test.cfg'))
 
 
 class TestCopytree(object):

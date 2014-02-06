@@ -320,57 +320,6 @@ class TestConfigInstaller(object):
         eq_(self.cfgInst, res)
         eq_('@', self.cfgInst._delimiter)
 
-    def assert_cfg_std(self, path):
-        lines = open(path).readlines()
-        eq_(8, len(lines))
-        eq_('/home/user/test.cfg\n', lines[0])
-        eq_('@{TMPDIR}/some-file.txt\n', lines[1])
-        eq_('${TMPDIR}\n', lines[2])
-        eq_('#{DNE}/test.txt\n', lines[3])
-        eq_('@{DNE}/test.txt\n', lines[4])
-        eq_('${DNE}/test.txt\n', lines[5])
-        eq_('/tmp/path\n', lines[6])
-        eq_('@{SOMEPATH}\n', lines[7])
-
-    def test_rewrite_cfgs_compile(self):
-        cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
-        cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
-        nestedPath = os.path.join(cfgPath, 'more')
-        nestedFile = os.path.join(nestedPath, 'text.cfg')
-        try:
-            os.makedirs(nestedPath)
-            shutil.copy('test/data/test.cfg', cfgFile)
-            shutil.copy('test/data/test.cfg', nestedFile)
-            self.cfgInst.to(cfgPath)
-            self.cfgInst.rewrite()
-            self.cfgInst._rewrite_cfgs()
-            self.assert_cfg_std(cfgFile)
-            self.assert_cfg_std(nestedFile)
-        finally:
-            shutil.rmtree(cfgPath)
-
-    def test_rewrite_cfgs_delimiter(self):
-        cfgPath = os.path.join(tempfile.gettempdir(), 'conf')
-        cfgFile = os.path.join(tempfile.gettempdir(), 'conf', 'test.cfg')
-        try:
-            os.makedirs(cfgPath)
-            shutil.copy('test/data/test.cfg', cfgFile)
-            self.cfgInst.to(cfgPath)
-            self.cfgInst.rewrite(delimiter='@')
-            self.cfgInst._rewrite_cfgs()
-            lines = open(cfgFile).readlines()
-            eq_(8, len(lines))
-            eq_('#{HOME}/test.cfg\n', lines[0])
-            eq_('/tmp/some-file.txt\n', lines[1])
-            eq_('${TMPDIR}\n', lines[2])
-            eq_('#{DNE}/test.txt\n', lines[3])
-            eq_('@{DNE}/test.txt\n', lines[4])
-            eq_('${DNE}/test.txt\n', lines[5])
-            eq_('#{SOMEPATH}\n', lines[6])
-            eq_('/tmp/path\n', lines[7])
-        finally:
-            shutil.rmtree(cfgPath)
-
     def test_done_nothing(self):
         res = self.cfgInst.done()
         assert res is self.inst
