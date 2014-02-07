@@ -1,0 +1,3 @@
+ls: ls -la
+echo: echo 'Hello World!'
+server : python start_server.py

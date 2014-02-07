@@ -7,6 +7,30 @@ from nose.tools import with_setup
 from build_pack_utils import utils
 
 
+class TestLoadEnv(object):
+    def test_load_env(self):
+        env = utils.load_env('test/data/env.txt')
+        eq_(3, len(env.keys()))
+        eq_(True, 'x' in env.keys())
+        eq_(True, 'y' in env.keys())
+        eq_(True, 'z' in env.keys())
+        eq_('1234', env['x'])
+        eq_('5678', env['y'])
+        eq_('90ab', env['z'])
+
+
+class TestLoadProcesses(object):
+    def test_load_procs(self):
+        procs = utils.load_processes('test/data/procs.txt')
+        eq_(3, len(procs.keys()))
+        eq_(True, 'ls' in procs.keys())
+        eq_(True, 'echo' in procs.keys())
+        eq_(True, 'server' in procs.keys())
+        eq_('ls -la', procs['ls'])
+        eq_("echo 'Hello World!'", procs['echo'])
+        eq_('python start_server.py', procs['server'])
+
+
 class TestLoadExtension(object):
     def test_load_test1(self):
         test1 = utils.load_extension('test/data/plugins/test1')
