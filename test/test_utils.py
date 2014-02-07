@@ -55,6 +55,28 @@ class TestProcessExtensions(object):
         eq_('1234', process.calls()[0].args[0]['TEST_ENV'])
         eq_('4321', process.calls()[1].args[0]['TEST_ENV'])
 
+    def test_process_extension_with_custom_args(self):
+        compile = Dingus(return_value=0)
+        extn = Dingus(compile=compile)
+        process = Dingus()
+        args = [Dingus(), Dingus()]
+        load_extension = utils.load_extension
+        utils.load_extension = Dingus(return_value=extn)
+        ctx = {'EXTENSIONS': ['doesnt matter']}
+        try:
+            utils.process_extensions(ctx, 'compile', process, args=args)
+            eq_(1, len(process.calls()))
+            eq_(1, len(utils.load_extension.calls()))
+            eq_(1, len(compile.calls()))
+            eq_(2, len(compile.calls()[0].args))
+            eq_(args[0], compile.calls()[0].args[0])
+            eq_(args[1], compile.calls()[0].args[1])
+            eq_(1, len(process.calls()))
+            eq_(1, len(process.calls()[0].args))
+            eq_(0, process.calls()[0].args[0])
+        finally:
+            utils.load_extension = load_extension
+
 
 class TestRewriteCfgs(object):
     def setUp(self):
