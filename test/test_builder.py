@@ -889,6 +889,12 @@ class TestStartScriptBuilder(object):
         }
         self.builder = Dingus(_ctx=self.ctx)
 
+    def test_using_pm(self):
+        b = StartScriptBuilder(self.builder)
+        eq_(False, b._use_pm)
+        b.using_process_manager()
+        eq_(True, b._use_pm)
+
     def test_write(self):
         b = StartScriptBuilder(self.builder)
         b.manual('ls -la')
@@ -922,6 +928,24 @@ class TestStartScriptBuilder(object):
             eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
             data = open(expectedFile, 'rt').read()
             assert data.find('ls -l') >= 0
+        finally:
+            if expectedFile and os.path.exists(expectedFile):
+                os.remove(expectedFile)
+
+    def test_with_pm(self):
+        b = StartScriptBuilder(self.builder)
+        b.using_process_manager()
+        expectedFile = None
+        try:
+            b.write()
+            expectedFile = os.path.join(tempfile.gettempdir(),
+                                        'start.sh')
+            assert os.path.exists(expectedFile)
+            eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
+            data = open(expectedFile, 'rt').readlines()
+            eq_(2, len(data))
+            eq_('export PYTHONPATH=$HOME/.bp/lib\n', data[0])
+            eq_('$HOME/.bp/bin/start', data[1])
         finally:
             if expectedFile and os.path.exists(expectedFile):
                 os.remove(expectedFile)
