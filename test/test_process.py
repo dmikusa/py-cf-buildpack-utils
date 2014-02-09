@@ -1,9 +1,9 @@
-import os
 import sys
 import StringIO
 from nose.tools import with_setup
 from nose.tools import eq_
-from build_pack_utils import *
+from build_pack_utils import Process
+from build_pack_utils import ProcessManager
 
 
 class TestProcess(object):
@@ -45,9 +45,6 @@ class TestProcessManager(object):
         pm.add_process('ls', 'ls -l')
         pm.loop()
         output = self._tmp_stdout.getvalue()
-        eq_(True, output.find('started with pid') > -1)
-        eq_(True, output.find('process terminated') > -1)
-        eq_(True, output.find('sending SIGTERM to all processes') > -1)
         eq_(True, output.find('README') > -1)
         eq_(True, output.find('setup.py') > -1)
         eq_(True, output.find('src') > -1)
