@@ -943,9 +943,8 @@ class TestStartScriptBuilder(object):
             assert os.path.exists(expectedFile)
             eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
             data = open(expectedFile, 'rt').readlines()
-            eq_(2, len(data))
-            eq_('export PYTHONPATH=$HOME/.bp/lib\n', data[0])
-            eq_('$HOME/.bp/bin/start', data[1])
+            eq_(1, len(data))
+            eq_('$HOME/.bp/bin/start', data[0])
         finally:
             if expectedFile and os.path.exists(expectedFile):
                 os.remove(expectedFile)
