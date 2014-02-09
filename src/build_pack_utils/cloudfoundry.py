@@ -44,14 +44,18 @@ class CloudFoundryUtil(object):
         ctx['BP_LOG_LEVEL'] = getattr(logging, logLevelStr, logging.INFO)
         # Add place holder for extensions
         ctx['EXTENSIONS'] = []
+        # Init Logging
+        CloudFoundryUtil.init_logging(ctx)
+        _log.info('CloudFoundry Initialized.')
         _log.debug("CloudFoundry Context Setup [%s]", ctx)
         return ctx
 
     @staticmethod
     def init_logging(ctx):
+        logDir = os.path.join(ctx['BUILD_DIR'], '.bp', 'logs')
+        safe_makedirs(logDir)
         logging.basicConfig(level=ctx['BP_LOG_LEVEL'],
-                            filename=os.path.join('$HOME', '..',
-                                                  'logs', 'bp.log'))
+                            filename=os.path.join(logDir, 'bp.log'))
 
     @staticmethod
     def load_json_config_file_from(folder, cfgFile):
