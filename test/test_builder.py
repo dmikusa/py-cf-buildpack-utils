@@ -1335,7 +1335,8 @@ class TestModuleInstaller(object):
             'LOCAL_MODULES_PATTERN': 'pattern/{MODULE_NAME}',
             'BUILD_DIR': 'test/data',
             'BP_DIR': '/tmp/bp_dir',
-            'CACHE_DIR': '/tmp/cache_dir'
+            'CACHE_DIR': '/tmp/cache_dir',
+            'MODULES': ['mod1', 'mod2']
         })
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Dingus(builder=self.builder)
@@ -1384,6 +1385,14 @@ class TestModuleInstaller(object):
         eq_(2, len(mi._modules))
         eq_('test1', mi._modules[0])
         eq_('test2', mi._modules[1])
+
+    def test_include_modules_from(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        res = mi.include_modules_from('MODULES')
+        eq_(mi, res)
+        eq_(2, len(mi._modules))
+        eq_('mod1', mi._modules[0])
+        eq_('mod2', mi._modules[1])
 
     def test_find_modules_with(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
