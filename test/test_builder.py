@@ -28,10 +28,10 @@ from build_pack_utils import utils
 
 class TestConfigurer(object):
     def setUp(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': './test/data',
             'BP_DIR': './test/data'
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
         self.cfgur = Configurer(self.builder)
 
@@ -63,9 +63,9 @@ class TestConfigurer(object):
 
 class TestDetecter(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir'
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
 
     def test_with_regex(self):
@@ -223,12 +223,12 @@ class TestDetecter(object):
 
 class TestInstaller(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache',
             'BP_DIR': '/tmp/build_dir',
             'PACKAGE': 'TMP'
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Installer(self.builder)
 
@@ -450,7 +450,8 @@ class TestExecutor(object):
 
 class TestFileUtil(object):
     def __init__(self):
-        self.builder = Dingus(_ctx={'BUILD_DIR': '/tmp/build_dir'})
+        self.builder = Dingus(_ctx=utils.FormattedDict(
+            {'BUILD_DIR': '/tmp/build_dir'}))
 
     def test_everything(self):
         fu = FileUtil(self.builder)
@@ -714,7 +715,7 @@ class TestFileUtil(object):
 class TestRunner(object):
     def __init__(self):
         self.builder = Dingus(
-            _ctx={'VERSION': '1.0.0'})
+            _ctx=utils.FormattedDict({'VERSION': '1.0.0'}))
 
     def test_command_string(self):
         r = Runner(self.builder)
@@ -882,11 +883,11 @@ class TestRunner(object):
 
 class TestStartScriptBuilder(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': tempfile.gettempdir(),
             'BP_DIR': '/tmp/build_dir',
             'EXTENSIONS': []
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
 
     def test_using_pm(self):
@@ -1150,11 +1151,11 @@ class TestScriptCommandBuilder(object):
 
 class TestEnvironmentVariableBuilder(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir',
             'BP_DIR': '/tmp/bp_dir',
             'VAL': '1234'
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
         self.ssb = Dingus(builder=self.builder)
 
@@ -1260,11 +1261,11 @@ class TestBuilder(object):
 
 class TestBuildPackManager(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir',
             'BP_DIR': '/tmp/bp_dir',
             'CACHE_DIR': '/tmp/cache_dir'
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
 
     def test_from_buildpack(self):
@@ -1288,13 +1289,13 @@ class TestBuildPackManager(object):
 
 class TestExtensionInstaller(object):
     def __init__(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir',
             'BP_DIR': '/tmp/bp_dir',
             'CACHE_DIR': '/tmp/cache_dir',
             'PLUGIN': 'plugins',
             'EXTENSIONS': []
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
         self.inst = Dingus(builder=self.builder)
 
@@ -1463,11 +1464,11 @@ class TestModuleInstaller(object):
 
 class TestSaveBuilder(object):
     def setUp(self):
-        self.ctx = {
+        self.ctx = utils.FormattedDict({
             'BUILD_DIR': os.path.join(tempfile.gettempdir(), 'save-builder'),
             'EXTENSIONS': [os.path.abspath('test/data/plugins/test1'),
                            os.path.abspath('test/data/plugins/test2')]
-        }
+        })
         self.builder = Dingus(_ctx=self.ctx)
         os.makedirs(self.ctx['BUILD_DIR'])
 
