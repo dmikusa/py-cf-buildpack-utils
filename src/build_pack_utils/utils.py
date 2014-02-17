@@ -49,7 +49,8 @@ def process_extensions(ctx, to_call, success, args=None, ignore=False):
     if not args:
         args = [ctx]
     for path in ctx['EXTENSIONS']:
-        _log.debug('Processing extension from [%s]', path)
+        _log.debug('Processing extension from [%s] with method [%s]',
+                   path, to_call)
         extn = load_extension(path)
         try:
             if hasattr(extn, to_call):
