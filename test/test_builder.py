@@ -932,6 +932,24 @@ class TestStartScriptBuilder(object):
             if expectedFile and os.path.exists(expectedFile):
                 os.remove(expectedFile)
 
+    def test_with_debug_console(self):
+        b = StartScriptBuilder(self.builder)
+        b.on_fail_run_debug_console()
+        expectedFile = None
+        try:
+            b.write()
+            expectedFile = os.path.join(tempfile.gettempdir(),
+                                        'start.sh')
+            assert os.path.exists(expectedFile)
+            eq_('0755', oct(stat.S_IMODE(os.lstat(expectedFile).st_mode)))
+            data = open(expectedFile, 'rt').readlines()
+            eq_(1, len(data))
+            eq_('curl -s https://raw.github.com/dmikusa-pivotal/'
+                'cf-debug-console/master/debug.sh | bash', data[0])
+        finally:
+            if expectedFile and os.path.exists(expectedFile):
+                os.remove(expectedFile)
+
     def test_with_pm(self):
         b = StartScriptBuilder(self.builder)
         b.using_process_manager()
