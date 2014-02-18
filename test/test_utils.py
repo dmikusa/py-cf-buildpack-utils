@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+import json
 from dingus import Dingus
 from nose.tools import eq_
 from nose.tools import with_setup
@@ -227,3 +228,9 @@ class TestFormattedDict(object):
         eq_(5678, x.get('B', format=False))
         eq_('{A}/{B}', x.get('C', format=False))
         eq_('1234/5678', x.get('C', format=True))
+
+    def test_json(self):
+        x = utils.FormattedDict({
+            'DATA': utils.wrap(json.dumps({'x': 1}))
+        })
+        eq_('{"x": 1}', x['DATA'])
