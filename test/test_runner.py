@@ -64,15 +64,15 @@ class TestRunner(object):
         self.bp._clone()
         output = self.bp._compile()
         eq_(True, output.startswith('Running cache test...'))
-        eq_(859, output.find('Listing Environment:'))
-        eq_(4169, output.find('CPU Info'))
+        eq_(True, output.find('Listing Environment:') >= 0)
+        eq_(True, output.find('CPU Info') >= 0)
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_release(self):
         self.bp._clone()
         output = self.bp._release()
         eq_(True, output.startswith('---'))
-        eq_(29, output.find('web: ./start.sh'))
+        eq_(True, output.find('web: ./start.sh') >= 0)
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_run(self):

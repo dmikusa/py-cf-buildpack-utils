@@ -28,7 +28,7 @@ class TestCloudFoundryInstaller(object):
             "SNAKE_DOWNLOAD_URL": "https://{HOST}/{PATH}/{SNAKE_PACKAGE}",
             "SNAKE_STRIP": True
         })
-        assert [] == os.listdir(self.buildDir)
+        assert ['.bp'] == os.listdir(self.buildDir)
         # uncomment to enforce cache is cleared every time
         #assert [] == os.listdir(self.cacheDir)
 
