@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import shutil
+import json
 from dingus import Dingus
 from nose.tools import eq_
 from nose.tools import with_setup
@@ -36,6 +37,8 @@ class TestCloudFoundryUtil(object):
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_load_env(self):
+        os.environ['VCAP_APPLICATION'] = json.dumps({'name': 'test'})
+        os.environ['VCAP_SERVICES'] = json.dumps({'service': 'junk'})
         ctx = CloudFoundryUtil.initialize()
         assert '/tmp/staged/app' == ctx['BUILD_DIR']
         assert '/tmp/cache' == ctx['CACHE_DIR']
@@ -44,6 +47,8 @@ class TestCloudFoundryUtil(object):
         assert '64m' == ctx['MEMORY_LIMIT']
         assert os.path.exists(ctx['BUILD_DIR'])
         assert os.path.exists(ctx['CACHE_DIR'])
+        assert ctx['VCAP_APPLICATION']['name'] == 'test'
+        assert ctx['VCAP_SERVICES']['service'] == 'junk'
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_load_json_config_file(self):
