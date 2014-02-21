@@ -1,4 +1,5 @@
 import sys
+import os
 import StringIO
 from nose.tools import with_setup
 from nose.tools import eq_
@@ -48,3 +49,12 @@ class TestProcessManager(object):
         eq_(True, output.find('README') > -1)
         eq_(True, output.find('setup.py') > -1)
         eq_(True, output.find('src') > -1)
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_process_manager_with_env(self):
+        os.environ['MYVAR'] = '1234'
+        pm = ProcessManager()
+        pm.add_process('cmd-name', 'echo $MYVAR')
+        pm.loop()
+        output = self._tmp_stdout.getvalue()
+        eq_(True, output.endswith('cmd-name | 1234\n'))
