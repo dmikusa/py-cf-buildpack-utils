@@ -90,6 +90,18 @@ class TestRewriteCfgs(object):
         if os.path.exists(self.cfgs):
             shutil.rmtree(self.cfgs)
 
+    def assert_cfg_fresh(self, path):
+        lines = open(path).readlines()
+        eq_(8, len(lines))
+        eq_('#{HOME}/test.cfg\n', lines[0])
+        eq_('@{TMPDIR}/some-file.txt\n', lines[1])
+        eq_('${TMPDIR}\n', lines[2])
+        eq_('#{DNE}/test.txt\n', lines[3])
+        eq_('@{DNE}/test.txt\n', lines[4])
+        eq_('${DNE}/test.txt\n', lines[5])
+        eq_('#{SOMEPATH}\n', lines[6])
+        eq_('@{SOMEPATH}\n', lines[7])
+
     def assert_cfg_std(self, path):
         lines = open(path).readlines()
         eq_(8, len(lines))
@@ -123,6 +135,16 @@ class TestRewriteCfgs(object):
         utils.rewrite_cfgs(self.cfgs, ctx)
         self.assert_cfg_std(os.path.join(self.cfgs, 'test.cfg'))
         self.assert_cfg_std(os.path.join(self.cfgs, 'subdir', 'test.cfg'))
+
+    def test_rewrite_file(self):
+        ctx = utils.FormattedDict({
+            'TMPDIR': '/tmp',
+            'HOME': '/home/user',
+            'SOMEPATH': '{TMPDIR}/path'
+        })
+        utils.rewrite_cfgs(os.path.join(self.cfgs, 'test.cfg'), ctx)
+        self.assert_cfg_std(os.path.join(self.cfgs, 'test.cfg'))
+        self.assert_cfg_fresh(os.path.join(self.cfgs, 'subdir', 'test.cfg'))
 
     def test_rewrite_custom_delimiter(self):
         ctx = utils.FormattedDict({
