@@ -179,7 +179,7 @@ class TestCopytree(object):
 
     @with_setup(setup=setUp, teardown=tearDown)
     def test_copytree_flat(self):
-        fromDir = 'test/data/config'
+        fromDir = 'test/data/.bp-config'
         utils.copytree(fromDir, self.toDir)
         self.assert_exists(self.toDir)
         self.assert_exists(os.path.join(self.toDir, 'options.json'))

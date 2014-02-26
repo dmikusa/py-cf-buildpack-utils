@@ -20,7 +20,7 @@ class TestBaseFileSearch(object):
         bfs._match = self.match_stub
         bfs.search('./test/data')
         eq_(21, len(self.files))
-        assert 'config' in self.files
+        assert '.bp-config' in self.files
         assert 'defaults' in self.files
         assert 'HASH' in self.files
         assert 'HASH.zip' in self.files
@@ -31,7 +31,7 @@ class TestBaseFileSearch(object):
         bfs._match = self.match_stub
         bfs.search('./test/data')
         eq_(21, len(self.files))
-        assert './test/data/config' in self.files
+        assert './test/data/.bp-config' in self.files
         assert './test/data/defaults' in self.files
         assert './test/data/HASH' in self.files
         assert './test/data/HASH.zip' in self.files
@@ -42,7 +42,7 @@ class TestBaseFileSearch(object):
         bfs._match = self.match_stub
         bfs.search('./test/data')
         eq_(35, len(self.files))
-        assert 'config' in self.files
+        assert '.bp-config' in self.files
         assert 'defaults' in self.files
         assert 'HASH' in self.files
         assert 'HASH.zip' in self.files
@@ -55,12 +55,12 @@ class TestBaseFileSearch(object):
         bfs._match = self.match_stub
         bfs.search('./test/data')
         eq_(35, len(self.files))
-        assert './test/data/config' in self.files
+        assert './test/data/.bp-config' in self.files
         assert './test/data/defaults' in self.files
         assert './test/data/HASH' in self.files
         assert './test/data/HASH.zip' in self.files
         assert './test/data/options.json' in self.files
-        assert './test/data/config/options.json' in self.files
+        assert './test/data/.bp-config/options.json' in self.files
         assert './test/data/defaults/options.json' in self.files
 
 
