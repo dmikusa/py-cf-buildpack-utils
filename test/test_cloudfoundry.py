@@ -127,6 +127,20 @@ class TestCloudFoundryInstallerBinaries(object):
         })
         eq_(Downloader, type(installer._dwn))
 
+    def test_is_url(self):
+        installer = CloudFoundryInstaller({
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TMPDIR': '/tmp/temp_dir',
+            'DOWNLOAD_METHOD': 'python'
+        })
+        eq_(True, installer._is_url('https://www.google.com'))
+        eq_(True, installer._is_url('http://www.google.com'))
+        eq_(True, installer._is_url('file:/tmp/some/file'))
+        eq_(False, installer._is_url('not a url'))
+        eq_(False, installer._is_url('51de8d32c2809fd3d8b9ccf8eb08b77a'))
+
     def test_install_binary_cached(self):
         # Setup mocks
         installer = CloudFoundryInstaller(
@@ -171,7 +185,51 @@ class TestCloudFoundryInstallerBinaries(object):
         # verify installation directory
         eq_('/tmp/build_dir/packages/tomcat', instDir)
 
-    def test_install_binary_direct_cached(self):
+    def test_install_binary_cached(self):
+        # Setup mocks
+        installer = CloudFoundryInstaller(
+            utils.FormattedDict({
+                'CACHE_HASH_ALGORITHM': 'sha1',
+                'BP_DIR': '/tmp/build_pack_dir',
+                'BUILD_DIR': '/tmp/build_dir',
+                'CACHE_DIR': '/tmp/cache_dir',
+                'TMPDIR': '/tmp/temp_dir',
+                'LOCAL_PACKAGE': 'tomcat.tar.gz',
+                'LOCAL_VERSION': '7.0.50',
+                'LOCAL_DOWNLOAD_URL': 'http://server/path/'
+                                      '{LOCAL_VERSION}/{LOCAL_PACKAGE}',
+                'LOCAL_PACKAGE_INSTALL_DIR': 'packages/tomcat'
+            }))
+        installer._unzipUtil = Dingus('unzip', extract__returns=
+                                      '/tmp/build_dir/packages/tomcat')
+        installer._hashUtil = Dingus('hash',
+                                     calculate_hash__returns='1234WXYZ')
+        installer._dcm = Dingus('dcm', get__returns=None)
+        installer._dwn = Dingus('download')
+        # Run test
+        instDir = installer.install_binary('LOCAL')
+        # Verify execution path, file is not cached
+        # Cache manager checks for file
+        assert installer._dcm.get.calls().once()
+        assert None is installer._dcm.calls('get')[0].return_value
+        # download is called once with file path
+        assert installer._dwn.download.calls().once()
+        assert 'http://server/path/7.0.50/tomcat.tar.gz' == \
+            installer._dwn.calls('download')[0].args[0]
+        # hash is called with file path
+        assert installer._hashUtil.calculate_hash.calls().once()
+        calls = installer._hashUtil.calls('calculate_hash')
+        assert calls[0].args[0].endswith('tomcat.tar.gz')
+        # cache manager is called with key and digest
+        assert installer._dcm.put.calls().once()
+        assert 'tomcat.tar.gz' == installer._dcm.calls('put')[0].args[0]
+        assert '1234WXYZ' == installer._dcm.calls('put')[0].args[2]
+        # file is extracted
+        assert installer._unzipUtil.extract.calls().once()
+        # verify installation directory
+        eq_('/tmp/build_dir/packages/tomcat', instDir)
+
+    def test_install_binary_direct_local_hash(self):
         # Setup mocks
         installer = CloudFoundryInstaller({
             'CACHE_HASH_ALGORITHM': 'sha1',
@@ -188,18 +246,20 @@ class TestCloudFoundryInstallerBinaries(object):
         installer._dwn = Dingus('download')
         # Run test
         instDir = installer.install_binary_direct(
-            'PREFIX/tomcat.tar.gz',
-            'PREFIX/tomcat.tar.gz.sha1',
+            'scheme://PREFIX/tomcat.tar.gz',
+            '51de8d32c2809fd3d8b9ccf8eb08b77a',
             '/tmp/build_dir/tomcat')
         # Verify execution path, file is not cached
-        # Check hash file is downloaded
-        assert installer._dwn.download_direct.calls().once()
         # Cache manager checks for file
         assert installer._dcm.get.calls().once()
+        assert installer._dcm.get.calls()[0].args[0] == \
+            'tomcat.tar.gz'
+        assert installer._dcm.get.calls()[0].args[1] == \
+            '51de8d32c2809fd3d8b9ccf8eb08b77a'
         assert None is installer._dcm.calls('get')[0].return_value
         # download is called once with file path
         assert installer._dwn.download.calls().once()
-        assert 'PREFIX/tomcat.tar.gz' == \
+        assert 'scheme://PREFIX/tomcat.tar.gz' == \
             installer._dwn.calls('download')[0].args[0]
         # hash is called with file path
         assert installer._hashUtil.calculate_hash.calls().once()
@@ -260,8 +320,8 @@ class TestCloudFoundryInstallerBinaries(object):
         installer._dwn = Dingus('download')
         # Run test
         instDir = installer.install_binary_direct(
-            'PREFIX/tomcat.tar.gz',
-            'PREFIX/tomcat.tar.gz.sha1',
+            'scheme://PREFIX/tomcat.tar.gz',
+            'scheme://PREFIX/tomcat.tar.gz.sha1',
             '/tmp/build_dir/tomcat')
         # Verify execution path, file is not cached
         # Check hash file is downloaded
