@@ -1455,11 +1455,12 @@ class TestModuleInstaller(object):
         mi.done()
         eq_(3, len(mi._cf.install_binary_direct.calls()))
         for mod, call in zip(mi._modules, mi._cf.install_binary_direct.calls):
-            eq_(4, len(call.args))
+            eq_(3, len(call.args))
             eq_('pattern/%s' % mod, call.args[0])
             eq_('pattern/%s.sha1' % mod, call.args[1])
             eq_('test/data/local', call.args[2])
-            eq_(False, call.args[3])
+            eq_(1, len(call.kwargs))
+            eq_(False, call.kwargs['strip'])
 
 
 class TestSaveBuilder(object):
