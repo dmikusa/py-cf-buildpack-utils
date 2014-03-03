@@ -230,6 +230,50 @@ class TestCloudFoundryInstallerBinaries(object):
         # verify installation directory
         eq_('/tmp/packages/tomcat', instDir)
 
+    def test_install_binary_direct_custom_name(self):
+        # Setup mocks
+        installer = CloudFoundryInstaller({
+            'CACHE_HASH_ALGORITHM': 'sha1',
+            'BP_DIR': '/tmp/build_pack_dir',
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TMPDIR': '/tmp/temp_dir'
+        })
+        installer._unzipUtil = Dingus('unzip',
+                                      extract__returns='/tmp/packages/tomcat')
+        installer._hashUtil = Dingus('hash',
+                                     calculate_hash__returns='1234WXYZ')
+        installer._dcm = Dingus('dcm', get__returns=None)
+        installer._dwn = Dingus('download')
+        # Run test
+        instDir = installer.install_binary_direct(
+            'scheme://PREFIX/tomcat.tar.gz',
+            'scheme://PREFIX/tomcat.tar.gz.sha',
+            '/tmp/build_dir/tomcat',
+            fileName='tomcat-custom.tar.gz')
+        # Verify execution path, file is not cached
+        # Check hash file is downloaded
+        assert installer._dwn.download_direct.calls().once()
+        # Cache manager checks for file
+        assert installer._dcm.get.calls().once()
+        assert None is installer._dcm.calls('get')[0].return_value
+        # download is called once with file path
+        assert installer._dwn.download.calls().once()
+        assert 'scheme://PREFIX/tomcat.tar.gz' == \
+            installer._dwn.calls('download')[0].args[0]
+        # hash is called with file path
+        assert installer._hashUtil.calculate_hash.calls().once()
+        calls = installer._hashUtil.calls('calculate_hash')
+        assert calls[0].args[0].endswith('tomcat-custom.tar.gz')
+        # cache manager is called with key and digest
+        assert installer._dcm.put.calls().once()
+        assert 'tomcat-custom.tar.gz' == installer._dcm.calls('put')[0].args[0]
+        assert '1234WXYZ' == installer._dcm.calls('put')[0].args[2]
+        # file is extracted
+        assert installer._unzipUtil.extract.calls().once()
+        # verify installation directory
+        eq_('/tmp/packages/tomcat', instDir)
+
     def test_install_binary_not_cached(self):
         # Setup mocks
         installer = CloudFoundryInstaller({
