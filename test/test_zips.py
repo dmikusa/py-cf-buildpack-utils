@@ -2,6 +2,7 @@ import os
 import tempfile
 import shutil
 from nose.tools import with_setup
+from nose.tools import eq_
 from build_pack_utils import UnzipUtil
 from build_pack_utils import HashUtil
 
@@ -95,6 +96,17 @@ class TestUnzipUtil(object):
         assert outPath.startswith(self._dir)
         assert os.path.exists(self._path)
         assert self._hash == self._hshUtil.calculate_hash(self._path)
+
+    @with_setup(setup=setUp, teardown=tearDown)
+    def test_extract_force_strip_not_needed(self):
+        uzUtil = UnzipUtil({})
+        outPath = uzUtil.extract(self.HASH_FILE_ZIP, self._dir, strip=True)
+        assert len(outPath) > 0
+        assert outPath.startswith(self._dir)
+        assert os.path.exists(self._path)
+        assert self._hash == self._hshUtil.calculate_hash(self._path)
+        tmpDir = tempfile.gettempdir()
+        eq_(0, len([f for f in os.listdir(tmpDir) if f.startswith('zips-')]))
 
     def test_pick_based_on_file_extension(self):
         uzUtil = UnzipUtil({})
