@@ -8,6 +8,8 @@ from nose.tools import eq_
 from nose.tools import raises
 from nose.tools import with_setup
 from dingus import Dingus
+from dingus import exception_raiser
+from urllib2 import HTTPError
 from build_pack_utils import Runner
 from build_pack_utils import Configurer
 from build_pack_utils import Installer
@@ -1461,6 +1463,22 @@ class TestModuleInstaller(object):
             eq_('test/data/local', call.args[2])
             eq_(1, len(call.kwargs))
             eq_(False, call.kwargs['strip'])
+
+    def test_done_module_fails(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        failedModules = []
+        def test_install_direct(url, hashUrl, toPath, strip):
+            failedModules.append(url)
+            raise HTTPError(url, 404, "FAIL [%s] :(" % url, None, None)
+        mi._cf = Dingus()
+        mi._cf.install_binary_direct = test_install_direct
+        mi.filter_files_by_extension('.mods')
+        mi.from_application('')
+        mi.done()
+        eq_(3, len(failedModules))
+        eq_(True, 'pattern/Module1' in failedModules)
+        eq_(True, 'pattern/Module2' in failedModules)
+        eq_(True, 'pattern/Module3' in failedModules)
 
 
 class TestSaveBuilder(object):
