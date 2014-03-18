@@ -1464,6 +1464,24 @@ class TestModuleInstaller(object):
             eq_(1, len(call.kwargs))
             eq_(False, call.kwargs['strip'])
 
+    def test_done_with_duplicates(self):
+        mi = ModuleInstaller(self.inst, 'LOCAL')
+        mi._cf = Dingus()
+        mi.filter_files_by_extension('.mods')
+        mi.from_application('')
+        mi.include_module('Module4')
+        mi.include_module('Module4')
+        mi.include_module('Module2')
+        mi.done()
+        eq_(4, len(mi._cf.install_binary_direct.calls()))
+        for mod, call in zip(set(mi._modules), mi._cf.install_binary_direct.calls):
+            eq_(3, len(call.args))
+            eq_('pattern/%s' % mod, call.args[0])
+            eq_('pattern/%s.sha1' % mod, call.args[1])
+            eq_('test/data/local', call.args[2])
+            eq_(1, len(call.kwargs))
+            eq_(False, call.kwargs['strip'])
+
     def test_done_module_fails(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
         failedModules = []
