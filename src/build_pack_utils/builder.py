@@ -802,6 +802,7 @@ class SaveBuilder(object):
         #  into one dict, duplicates are grouped in a list and kept
         #  in the same order.
         all_extns_env = {}
+
         def process(env):
             for key, val in env.iteritems():
                 if key in all_extns_env.keys():

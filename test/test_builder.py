@@ -7,7 +7,6 @@ from StringIO import StringIO
 from nose.tools import eq_
 from nose.tools import raises
 from dingus import Dingus
-from dingus import exception_raiser
 from urllib2 import HTTPError
 from build_pack_utils import Runner
 from build_pack_utils import Configurer
@@ -1471,7 +1470,8 @@ class TestModuleInstaller(object):
         mi.include_module('Module2')
         mi.done()
         eq_(4, len(mi._cf.install_binary_direct.calls()))
-        for mod, call in zip(set(mi._modules), mi._cf.install_binary_direct.calls):
+        for mod, call in zip(set(mi._modules),
+                             mi._cf.install_binary_direct.calls):
             eq_(3, len(call.args))
             eq_('pattern/%s' % mod, call.args[0])
             eq_('pattern/%s.sha1' % mod, call.args[1])
@@ -1482,6 +1482,7 @@ class TestModuleInstaller(object):
     def test_done_module_fails(self):
         mi = ModuleInstaller(self.inst, 'LOCAL')
         failedModules = []
+
         def test_install_direct(url, hashUrl, toPath, strip):
             failedModules.append(url)
             raise HTTPError(url, 404, "FAIL [%s] :(" % url, None, None)
