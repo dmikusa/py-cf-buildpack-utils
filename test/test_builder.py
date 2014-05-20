@@ -1511,6 +1511,7 @@ class TestSaveBuilder(object):
             shutil.rmtree(self.ctx['BUILD_DIR'])
 
     def test_runtime_environment(self):
+        self.ctx['EXTENSIONS'] = [os.path.abspath('test/data/plugins/test1')]
         sb = SaveBuilder(self.builder)
         res = sb.runtime_environment()
         eq_(sb, res)
@@ -1518,9 +1519,35 @@ class TestSaveBuilder(object):
         eq_(True, os.path.exists(envFile))
         with open(envFile, 'rt') as f:
             lines = f.readlines()
-            eq_(2, len(lines))
+            eq_(1, len(lines))
             eq_('TEST_ENV=1234\n', lines[0])
-            eq_('TEST_ENV=4321\n', lines[1])
+
+    def test_runtime_environment_with_dups(self):
+        sb = SaveBuilder(self.builder)
+        res = sb.runtime_environment()
+        eq_(sb, res)
+        envFile = os.path.join(self.ctx['BUILD_DIR'], '.env')
+        eq_(True, os.path.exists(envFile))
+        with open(envFile, 'rt') as f:
+            lines = f.readlines()
+            eq_(1, len(lines))
+            eq_('TEST_ENV=1234:4321\n', lines[0])
+
+    def test_runtime_environment_with_more_dups(self):
+        self.ctx['EXTENSIONS'] = [
+            os.path.abspath('test/data/plugins/test1'),
+            os.path.abspath('test/data/plugins/test2'),
+            os.path.abspath('test/data/plugins/test3')]
+        sb = SaveBuilder(self.builder)
+        res = sb.runtime_environment()
+        eq_(sb, res)
+        envFile = os.path.join(self.ctx['BUILD_DIR'], '.env')
+        eq_(True, os.path.exists(envFile))
+        with open(envFile, 'rt') as f:
+            lines = f.readlines()
+            eq_(1, len(lines))
+            eq_('TEST_ENV=%s\n' % os.pathsep.join(['1234', '4321', '9876']),
+                lines[0])
 
     def test_process_list(self):
         sb = SaveBuilder(self.builder)
