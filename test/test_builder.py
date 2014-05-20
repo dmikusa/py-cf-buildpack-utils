@@ -6,7 +6,6 @@ import shutil
 from StringIO import StringIO
 from nose.tools import eq_
 from nose.tools import raises
-from nose.tools import with_setup
 from dingus import Dingus
 from dingus import exception_raiser
 from urllib2 import HTTPError
@@ -37,7 +36,6 @@ class TestConfigurer(object):
         self.builder = Dingus(_ctx=self.ctx)
         self.cfgur = Configurer(self.builder)
 
-    @with_setup(setup=setUp)
     def test_default_config(self):
         assert 2 == len(self.ctx.keys())
         res = self.cfgur.default_config()
@@ -50,7 +48,6 @@ class TestConfigurer(object):
         assert 'map' in self.ctx.keys()
         assert res is self.cfgur
 
-    @with_setup(setup=setUp)
     def test_user_config(self):
         res = self.cfgur.user_config()
         assert 6 == len(self.ctx.keys())
@@ -1513,7 +1510,6 @@ class TestSaveBuilder(object):
         if os.path.exists(self.ctx['BUILD_DIR']):
             shutil.rmtree(self.ctx['BUILD_DIR'])
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_runtime_environment(self):
         sb = SaveBuilder(self.builder)
         res = sb.runtime_environment()
@@ -1526,7 +1522,6 @@ class TestSaveBuilder(object):
             eq_('TEST_ENV=1234\n', lines[0])
             eq_('TEST_ENV=4321\n', lines[1])
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_process_list(self):
         sb = SaveBuilder(self.builder)
         res = sb.process_list()
