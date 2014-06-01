@@ -1307,13 +1307,13 @@ class TestExtensionInstaller(object):
         ei = ExtensionInstaller(self.inst)
         eq_(0, len(ei._paths))
         ei.from_path('test/data/plugins')
-        eq_(3, len(ei._paths))
+        eq_(4, len(ei._paths))
 
     def test_from_path_with_format(self):
         ei = ExtensionInstaller(self.inst)
         eq_(0, len(ei._paths))
         ei.from_path('test/data/{PLUGIN}')
-        eq_(3, len(ei._paths))
+        eq_(4, len(ei._paths))
 
     def test_works(self):
         ei = ExtensionInstaller(self.inst)
