@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import json
 from dingus import Dingus
+from dingus import patch
 from nose.tools import eq_
 from nose.tools import with_setup
 from build_pack_utils import CloudFoundryUtil
@@ -337,6 +338,43 @@ class TestCloudFoundryInstallerBinaries(object):
         # file is extracted
         assert installer._unzipUtil.extract.calls().once()
         eq_('/tmp/build_dir/tomcat', instDir)
+
+    def test_install_binary_direct_not_zipped(self):
+        # Setup mocks
+        installer = CloudFoundryInstaller({
+            'BUILD_DIR': '/tmp/build_dir',
+            'CACHE_DIR': '/tmp/cache_dir',
+            'TMPDIR': '/tmp/temp_dir'
+        })
+        installer._unzipUtil = Dingus('unzip',
+                                      extract__returns='N/A')
+        installer._hashUtil = Dingus('hash',
+                                     calculate_hash__returns='1234WXYZ')
+        installer._dcm = Dingus('dcm', get__returns='/tmp/cache/composer.phar')
+        installer._dwn = Dingus('download')
+        shutil_copy = Dingus()
+        # Run test
+        with patch('shutil.copy', shutil_copy):
+            instDir = installer.install_binary_direct(
+                'scheme://PREFIX/composer.phar',
+                'scheme://PREFIX/composer.phar.sha1',
+                '/tmp/build_dir/composer',
+                extract=False)
+        # Verify execution path, file is not cached
+        # Check hash file is downloaded
+        assert installer._dwn.download_direct.calls().once()
+        # Cache manager checks for file
+        assert installer._dcm.get.calls().once()
+        assert '/tmp/cache/composer.phar' == \
+            installer._dcm.calls('get')[0].return_value
+        # make sure download section is skipped
+        assert 0 == len(installer._dwn.calls('download'))
+        assert 0 == len(installer._hashUtil.calls('calculate_hash'))
+        assert 0 == len(installer._dcm.calls('put'))
+        # file is not extracted, but copied instead
+        assert 0 == len(installer._unzipUtil.extract.calls())
+        assert shutil_copy.calls().once()
+        eq_('/tmp/build_dir/composer', instDir)
 
 
 class TestCloudFoundryInstallerConfig(object):
