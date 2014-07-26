@@ -97,7 +97,7 @@ def find_git_url(bp_dir):
                                    'rev-parse', '--short', 'HEAD'])
             if url and commit:
                 return "%s#%s" % (url.strip(), commit.strip())
-        except OSError, e:
+        except OSError:
             _log.debug("Git does not seem to be installed / available",
                        exc_info=True)
 
