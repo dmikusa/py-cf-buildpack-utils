@@ -264,8 +264,8 @@ class TestFindBpUrl(object):
 
     def testThisProject(self):
         git_url = utils.find_git_url(self.this_project)
-        eq_('git@github.com:dmikusa-pivotal/py-cf-buildpack-utils.git#047d28d',
-            git_url)
+        assert git_url.startswith(
+            'git@github.com:dmikusa-pivotal/py-cf-buildpack-utils.git#')
 
     def testNotGitProject(self):
         git_url = utils.find_git_url(os.path.join(self.this_project, 'test'))
@@ -279,3 +279,10 @@ class TestFindBpUrl(object):
             eq_(None, git_url)
         finally:
             os.environ['PATH'] = old_path
+
+    def testSomeOtherGitDir(self):
+        prj_git_url = utils.find_git_url(self.this_project)
+        git_url = utils.find_git_url(os.path.join(os.path.dirname(self.this_project),
+                                                  'cf-php-build-pack'))
+        assert prj_git_url != git_url
+

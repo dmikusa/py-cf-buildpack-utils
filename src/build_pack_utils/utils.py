@@ -91,8 +91,10 @@ def rewrite_cfgs(toPath, ctx, delim='#'):
 def find_git_url(bp_dir):
     if os.path.exists(os.path.join(bp_dir, '.git')):
         try:
-            url = check_output(['git', 'config', '--get', 'remote.origin.url'])
-            commit = check_output(['git', 'rev-parse', '--short', 'HEAD'])
+            url = check_output(['git', '--git-dir=%s/.git' % bp_dir,
+                                'config', '--get', 'remote.origin.url'])
+            commit = check_output(['git', '--git-dir=%s/.git' % bp_dir,
+                                   'rev-parse', '--short', 'HEAD'])
             if url and commit:
                 return "%s#%s" % (url.strip(), commit.strip())
         except OSError, e:
