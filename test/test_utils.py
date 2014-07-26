@@ -256,3 +256,26 @@ class TestFormattedDict(object):
             'DATA': utils.wrap(json.dumps({'x': 1}))
         })
         eq_('{"x": 1}', x['DATA'])
+
+
+class TestFindBpUrl(object):
+    def setUp(self):
+        self.this_project = os.path.dirname(os.path.dirname(__file__))
+
+    def testThisProject(self):
+        git_url = utils.find_git_url(self.this_project)
+        eq_('git@github.com:dmikusa-pivotal/py-cf-buildpack-utils.git#047d28d',
+            git_url)
+
+    def testNotGitProject(self):
+        git_url = utils.find_git_url(os.path.join(self.this_project, 'test'))
+        eq_(None, git_url)
+
+    def testNoGitInstalled(self):
+        old_path = os.environ['PATH']
+        os.environ['PATH'] = ''
+        try:
+            git_url = utils.find_git_url(self.this_project)
+            eq_(None, git_url)
+        finally:
+            os.environ['PATH'] = old_path
