@@ -8,7 +8,7 @@ from build_pack_utils import ContainsFileSearch
 
 
 class TestBaseFileSearch(object):
-    def __init__(self):
+    def setUp(self):
         self.files = []
 
     def match_stub(self, term):
@@ -41,7 +41,7 @@ class TestBaseFileSearch(object):
         bfs.recursive = True
         bfs._match = self.match_stub
         bfs.search('./test/data')
-        eq_(38, len(self.files))
+        eq_(51, len(self.files))
         assert '.bp-config' in self.files
         assert 'defaults' in self.files
         assert 'HASH' in self.files
@@ -54,7 +54,7 @@ class TestBaseFileSearch(object):
         bfs.recursive = True
         bfs._match = self.match_stub
         bfs.search('./test/data')
-        eq_(38, len(self.files))
+        eq_(51, len(self.files))
         assert './test/data/.bp-config' in self.files
         assert './test/data/defaults' in self.files
         assert './test/data/HASH' in self.files
