@@ -1365,24 +1365,28 @@ class TestExtensionRegister(object):
             'EXTENSIONS': []
         })
         self.builder = Dingus(_ctx=self.ctx)
+        self.reg = Register(self.builder)
 
     def test_from_location(self):
-        ei = ExtensionRegister(self.builder)
+        ei = ExtensionRegister(self.builder, self.reg)
         eq_(0, len(ei._paths))
-        ei.from_path('test/data/plugins/test1')
+        res = ei.from_path('test/data/plugins/test1')
+        assert res is self.reg
         eq_(1, len(ei._paths))
 
     def test_from_directory(self):
-        ei = ExtensionRegister(self.builder)
+        ei = ExtensionRegister(self.builder, self.reg)
         eq_(0, len(ei._paths))
-        ei.from_path('test/data/plugins')
-        eq_(4, len(ei._paths))
+        res = ei.from_path('test/data/plugins')
+        assert res is self.reg
+        eq_(5, len(ei._paths))
 
     def test_from_path_with_format(self):
-        ei = ExtensionRegister(self.builder)
+        ei = ExtensionRegister(self.builder, self.reg)
         eq_(0, len(ei._paths))
-        ei.from_path('test/data/{PLUGIN}')
-        eq_(4, len(ei._paths))
+        res = ei.from_path('test/data/{PLUGIN}')
+        assert res is self.reg
+        eq_(5, len(ei._paths))
 
 
 class TestModuleInstaller(object):
