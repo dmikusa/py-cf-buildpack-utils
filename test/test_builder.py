@@ -1336,14 +1336,16 @@ class TestRegister(object):
     def test_done_ok(self):
         r = Register(self.builder)
         r.extension().from_path('test/data/plugins/test5')
-        r.done()
+        res = r.done()
+        assert res is self.builder
         assert 'ADDED_BY_EXTENSION' in self.ctx.keys()
         assert self.ctx['ADDED_BY_EXTENSION']
 
     def test_done_no_configure_method(self):
         r = Register(self.builder)
         r.extension().from_path('test/data/plugins/test3')
-        r.done()
+        res = r.done()
+        assert res is self.builder
         assert 'ADDED_BY_EXTENSION' not in self.ctx.keys()
 
     def test_done_configure_exception(self):
