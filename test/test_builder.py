@@ -20,7 +20,8 @@ from build_pack_utils import Builder
 from build_pack_utils import ConfigInstaller
 from build_pack_utils import FileUtil
 from build_pack_utils import BuildPackManager
-from build_pack_utils import ExtensionInstaller
+from build_pack_utils import Register
+from build_pack_utils import ExtensionRegister
 from build_pack_utils import ModuleInstaller
 from build_pack_utils import SaveBuilder
 from build_pack_utils import utils
@@ -220,14 +221,16 @@ class TestDetecter(object):
 
 
 class TestInstaller(object):
-    def __init__(self):
+    def setUp(self):
         self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir',
             'CACHE_DIR': '/tmp/cache',
             'BP_DIR': '/tmp/build_dir',
-            'PACKAGE': 'TMP'
+            'PACKAGE': 'TMP',
+            'EXTENSIONS': []
         })
         self.builder = Dingus(_ctx=self.ctx)
+        self.reg = Register(self.builder)
         self.inst = Installer(self.builder)
 
     def test_package(self):
@@ -255,6 +258,30 @@ class TestInstaller(object):
         assert 'TEST2_INSTALL_PATH' in self.ctx
         eq_('/tmp/installed/TEST2', self.ctx['TEST2_INSTALL_PATH'])
         assert self.inst == res
+
+    def test_extensions_works(self):
+        self.reg.extension().from_path('test/data/plugins/test1')
+        eq_(0, len(self.ctx['EXTENSIONS']))
+        self.inst.extensions()
+        eq_(1, len(self.ctx['EXTENSIONS']))
+        eq_(os.path.abspath('test/data/plugins/test1'),
+            self.ctx['EXTENSIONS'][0])
+
+    def test_extensions_fails_retcode(self):
+        self.reg.extension().from_path('test/data/plugins/test2')
+        try:
+            self.inst.extensions()
+            assert False, "should not reach this code"
+        except RuntimeError, e:
+            eq_('Extension Failed with [-1]', str(e))
+
+    def test_extensions_fails_exception(self):
+        self.reg.extension().from_path('test/data/plugins/test3')
+        try:
+            self.inst.extensions()
+            assert False, "should not reach this code"
+        except ValueError, e:
+            eq_('Intentional', str(e))
 
     def test_done(self):
         res = self.inst.done()
@@ -1285,7 +1312,24 @@ class TestBuildPackManager(object):
         eq_(True, output.find('CPU Info') > -1)
 
 
-class TestExtensionInstaller(object):
+class TestRegister(object):
+    def __init__(self):
+        self.builder = Dingus()
+
+    def test_extension(self):
+        r = Register(self.builder)
+        res1 = r.extension()
+        assert res1 is not None
+        res2 = r.extension()
+        assert res2 is not None
+        assert res1 is res2
+        res3 = r.extensions()
+        assert res3 is not None
+        assert res1 is res3
+        assert self.builder._extn_reg is res1
+
+
+class TestExtensionRegister(object):
     def __init__(self):
         self.ctx = utils.FormattedDict({
             'BUILD_DIR': '/tmp/build_dir',
@@ -1295,54 +1339,24 @@ class TestExtensionInstaller(object):
             'EXTENSIONS': []
         })
         self.builder = Dingus(_ctx=self.ctx)
-        self.inst = Dingus(builder=self.builder)
 
     def test_from_location(self):
-        ei = ExtensionInstaller(self.inst)
+        ei = ExtensionRegister(self.builder)
         eq_(0, len(ei._paths))
         ei.from_path('test/data/plugins/test1')
         eq_(1, len(ei._paths))
 
     def test_from_directory(self):
-        ei = ExtensionInstaller(self.inst)
+        ei = ExtensionRegister(self.builder)
         eq_(0, len(ei._paths))
         ei.from_path('test/data/plugins')
         eq_(4, len(ei._paths))
 
     def test_from_path_with_format(self):
-        ei = ExtensionInstaller(self.inst)
+        ei = ExtensionRegister(self.builder)
         eq_(0, len(ei._paths))
         ei.from_path('test/data/{PLUGIN}')
         eq_(4, len(ei._paths))
-
-    def test_works(self):
-        ei = ExtensionInstaller(self.inst)
-        ei.from_path('test/data/plugins/test1')
-        eq_(0, len(self.ctx['EXTENSIONS']))
-        ei.done()
-        eq_(1, len(self.ctx['EXTENSIONS']))
-        eq_(os.path.abspath('test/data/plugins/test1'),
-            self.ctx['EXTENSIONS'][0])
-
-    def test_fails_retcode(self):
-        ei = ExtensionInstaller(self.inst)
-        ei.from_path('test/data/plugins/test2')
-        ei.ignore_errors(False)
-        try:
-            ei.done()
-            assert False, "should not reach this code"
-        except RuntimeError, e:
-            eq_('Extension Failed with [-1]', str(e))
-
-    def test_fails_exception(self):
-        ei = ExtensionInstaller(self.inst)
-        ei.from_path('test/data/plugins/test3')
-        ei.ignore_errors(False)
-        try:
-            ei.done()
-            assert False, "should not reach this code"
-        except ValueError, e:
-            eq_('Intentional', str(e))
 
 
 class TestModuleInstaller(object):
