@@ -74,7 +74,7 @@ class TestLoadExtension(object):
             os.remove('test/data/plugins/test5/__init__.pyc')
         except IOError:
             pass
-        test5 = utils.load_extension('test/data/plugins/test5')
+        utils.load_extension('test/data/plugins/test5')
         assert os.path.exists('test/data/plugins/test5/__init__.py')
 
 
@@ -321,7 +321,8 @@ class TestFindBpUrl(object):
 
     def testSomeOtherGitDir(self):
         prj_git_url = utils.find_git_url(self.this_project)
-        git_url = utils.find_git_url(os.path.join(os.path.dirname(self.this_project),
-                                                  'cf-php-build-pack'))
+        git_url = utils.find_git_url(
+            os.path.join(
+                os.path.dirname(self.this_project),
+                'cf-php-build-pack'))
         assert prj_git_url != git_url
-
