@@ -1313,8 +1313,13 @@ class TestBuildPackManager(object):
 
 
 class TestRegister(object):
-    def __init__(self):
-        self.builder = Dingus()
+    def setUp(self):
+        self.ctx = utils.FormattedDict({
+        })
+        self.builder = Dingus(_ctx=self.ctx)
+
+    def tearDown(self):
+        del self.builder._extn_reg
 
     def test_extension(self):
         r = Register(self.builder)
@@ -1327,6 +1332,27 @@ class TestRegister(object):
         assert res3 is not None
         assert res1 is res3
         assert self.builder._extn_reg is res1
+
+    def test_done_ok(self):
+        r = Register(self.builder)
+        r.extension().from_path('test/data/plugins/test5')
+        r.done()
+        assert 'ADDED_BY_EXTENSION' in self.ctx.keys()
+        assert self.ctx['ADDED_BY_EXTENSION']
+
+    def test_done_no_configure_method(self):
+        r = Register(self.builder)
+        r.extension().from_path('test/data/plugins/test3')
+        r.done()
+        assert 'ADDED_BY_EXTENSION' not in self.ctx.keys()
+
+    def test_done_configure_exception(self):
+        r = Register(self.builder)
+        r.extension().from_path('test/data/plugins/test4')
+        try:
+            r.done()
+        except ValueError, e:
+            eq_('Intentional', str(e))
 
 
 class TestExtensionRegister(object):

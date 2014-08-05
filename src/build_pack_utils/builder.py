@@ -201,9 +201,10 @@ class Register(object):
         return self._builder._extn_reg
 
     def done(self):
-        # TODO: call on_reg event
+        def process(resp):
+            pass  # ignore result, don't care
         for extn in self._builder._extn_reg._paths:
-            _log.info("Registered extension at [%s]", extn)
+            process_extension(extn, self._builder._ctx, 'configure', process)
 
 
 class ModuleInstaller(object):

@@ -10,3 +10,6 @@ def service_environment(ctx):
 def compile(installer):
     raise ValueError("Intentional")
     return 0
+
+def configure(ctx):
+    raise ValueError("Intentional")
