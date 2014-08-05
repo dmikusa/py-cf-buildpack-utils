@@ -38,6 +38,36 @@ class TestLoadExtension(object):
         res = test1.service_environment({})
         eq_('1234', res['TEST_ENV'])
 
+    def test_load_test5(self):
+        test5 = utils.load_extension('test/data/plugins/test5')
+        ctx = {}
+        res = test5.configure(ctx)
+        assert res is None
+        assert 'ADDED_BY_EXTENSION' in ctx.keys()
+        assert ctx['ADDED_BY_EXTENSION']
+
+    def test_load_test4(self):
+        test4 = utils.load_extension('test/data/plugins/test4')
+        ctx = {}
+        try:
+            test4.configure(ctx)
+        except ValueError, e:
+            eq_('Intentional', str(e))
+
+    def test_load_test3(self):
+        test3 = utils.load_extension('test/data/plugins/test3')
+        assert not hasattr(test3, 'configure')
+
+    def test_load_test4then3(self):
+        test4 = utils.load_extension('test/data/plugins/test4')
+        ctx = {}
+        try:
+            test4.configure(ctx)
+        except ValueError, e:
+            eq_('Intentional', str(e))
+        test3 = utils.load_extension('test/data/plugins/test3')
+        assert not hasattr(test3, 'configure')
+
 
 class TestProcessExtensions(object):
     def test_process_extension(self):
