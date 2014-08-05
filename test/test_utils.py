@@ -68,6 +68,15 @@ class TestLoadExtension(object):
         test3 = utils.load_extension('test/data/plugins/test3')
         assert not hasattr(test3, 'configure')
 
+    def test_load_without_init(self):
+        try:
+            os.remove('test/data/plugins/test5/__init__.py')
+            os.remove('test/data/plugins/test5/__init__.pyc')
+        except IOError:
+            pass
+        test5 = utils.load_extension('test/data/plugins/test5')
+        assert os.path.exists('test/data/plugins/test5/__init__.py')
+
 
 class TestProcessExtensions(object):
     def test_process_extension(self):

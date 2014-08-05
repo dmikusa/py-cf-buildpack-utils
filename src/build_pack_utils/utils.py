@@ -42,6 +42,10 @@ def load_processes(path):
 
 def load_extension(path):
     _log.debug("Loading extension from [%s]", path)
+    init = os.path.join(path, '__init__.py')
+    if not os.path.exists(init):
+        with open(init, 'w'):
+            pass  # just create an empty file
     try:
         sys.path.append(os.path.dirname(path))
         extn = __import__('%s.extension' % os.path.basename(path),
