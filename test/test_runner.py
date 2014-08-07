@@ -1,6 +1,9 @@
+import os
 import os.path
+import sys
 import tempfile
 import shutil
+import cStringIO
 from nose.tools import eq_
 from nose.tools import with_setup
 from build_pack_utils import runner
@@ -77,3 +80,57 @@ class TestRunner(object):
     @with_setup(setup=setUp, teardown=tearDown)
     def test_run(self):
         self.bp.run()
+
+
+class TestStreamOutput(object):
+    def setUp(self):
+        self.string_stream = cStringIO.StringIO()
+        (self.file_no,
+         self.file_name) = tempfile.mkstemp(prefix='stream-test',
+                                            suffix='.txt')
+        self.file_stream = os.fdopen(self.file_no)
+
+    def tearDown(self):
+        self.file_stream.close()
+        os.remove(self.file_name)
+
+    def test_stream_echo(self):
+        runner.stream_output(self.file_stream, ['echo', 'Hello World!'])
+        self.file_stream.seek(0)
+        eq_("Hello World!\n", self.file_stream.read())
+
+    def test_stream_echo_stdout(self):
+        runner.stream_output(sys.stdout, ['echo', 'Hello World!'])
+
+    def test_stream_echo_string(self):
+        runner.stream_output(self.string_stream, ['echo', 'Hello World!'])
+        self.string_stream.seek(0)
+        eq_("Hello World!\n", self.string_stream.read())
+
+    def test_stream_big_file(self):
+        # https://blog.nelhage.com/2010/02/a-very-subtle-bug/
+        #  fixed in Python 3, it appears
+        def fix_pipe():
+            import signal
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+        size = 625000  # 5MB
+        runner.stream_output(self.file_stream,
+                             "cat /dev/urandom | head -c 625000",
+                             shell=True,
+                             preexec_fn=fix_pipe)
+        self.file_stream.seek(0)
+        eq_(size, os.path.getsize(self.file_name))
+
+    def test_stream_big_string(self):
+        # https://blog.nelhage.com/2010/02/a-very-subtle-bug/
+        #  fixed in Python 3, it appears
+        def fix_pipe():
+            import signal
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+        size = 625000  # 5MB
+        runner.stream_output(self.string_stream,
+                             "cat /dev/urandom | head -c 625000",
+                             shell=True,
+                             preexec_fn=fix_pipe)
+        self.string_stream.seek(0)
+        eq_(size, len(self.string_stream.read()))
