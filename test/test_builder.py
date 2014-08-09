@@ -551,6 +551,7 @@ class TestFileUtil(object):
         assert fu._filters[0]('./test/data/junk')
 
     def test_under(self):
+        # leading /
         fu = FileUtil(self.builder)
         fu.under('/tmp/path')
         eq_('/tmp/path', fu._from_path)
@@ -560,8 +561,13 @@ class TestFileUtil(object):
         eq_(os.path.join(os.getcwd(), 'test/data'), fu._from_path)
         fu.under('{BUILD_DIR}/php')
         eq_('/tmp/build_dir/php', fu._from_path)
+        # no leading /
+        self.builder._ctx['BUILD_DIR'] = 'build_dir'
+        fu.under('BUILD_DIR')
+        eq_(os.path.join(os.getcwd(), 'build_dir'), fu._from_path)
 
     def test_into(self):
+        # leading /
         fu = FileUtil(self.builder)
         fu.into('BUILD_DIR')
         eq_('/tmp/build_dir', fu._into_path)
@@ -572,6 +578,13 @@ class TestFileUtil(object):
         eq_('/tmp/test', fu._into_path)
         fu.into('{BUILD_DIR}/php')
         eq_('/tmp/build_dir/php', fu._into_path)
+        # no leading /
+        self.builder._ctx['BUILD_DIR'] = 'build_dir'
+        fu.under('/junk')
+        fu.into('BUILD_DIR')
+        eq_('/junk/build_dir', fu._into_path)
+        fu.into('{BUILD_DIR}/php')
+        eq_('/junk/build_dir/php', fu._into_path)
 
     def test_done_src_and_dest_match(self):
         fu = FileUtil(self.builder)
