@@ -131,7 +131,7 @@ class TestRewriteCfgs(object):
 
     def assert_cfg_fresh(self, path):
         lines = open(path).readlines()
-        eq_(8, len(lines))
+        eq_(9, len(lines))
         eq_('#{HOME}/test.cfg\n', lines[0])
         eq_('@{TMPDIR}/some-file.txt\n', lines[1])
         eq_('${TMPDIR}\n', lines[2])
@@ -143,7 +143,7 @@ class TestRewriteCfgs(object):
 
     def assert_cfg_std(self, path):
         lines = open(path).readlines()
-        eq_(8, len(lines))
+        eq_(9, len(lines))
         eq_('/home/user/test.cfg\n', lines[0])
         eq_('@{TMPDIR}/some-file.txt\n', lines[1])
         eq_('${TMPDIR}\n', lines[2])
@@ -155,7 +155,7 @@ class TestRewriteCfgs(object):
 
     def assert_cfg_custom(self, path):
         lines = open(path).readlines()
-        eq_(8, len(lines))
+        eq_(9, len(lines))
         eq_('#{HOME}/test.cfg\n', lines[0])
         eq_('/tmp/some-file.txt\n', lines[1])
         eq_('${TMPDIR}\n', lines[2])

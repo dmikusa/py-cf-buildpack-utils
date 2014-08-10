@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import logging
+import codecs
 from string import Template
 from runner import check_output
 
@@ -76,10 +77,10 @@ def process_extensions(ctx, to_call, success, args=None, ignore=False):
 
 
 def rewrite_with_template(template, cfgPath, ctx):
-    with open(cfgPath) as fin:
+    with codecs.open(cfgPath, encoding='utf-8') as fin:
         data = fin.read()
-    with open(cfgPath, 'wt') as out:
-        out.write(template(data.decode('utf-8')).safe_substitute(ctx))
+    with codecs.open(cfgPath, encoding='utf-8', mode='wt') as out:
+        out.write(template(data).safe_substitute(ctx))
 
 
 def rewrite_cfgs(toPath, ctx, delim='#'):
