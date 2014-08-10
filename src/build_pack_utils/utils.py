@@ -79,7 +79,7 @@ def rewrite_with_template(template, cfgPath, ctx):
     with open(cfgPath) as fin:
         data = fin.read()
     with open(cfgPath, 'wt') as out:
-        out.write(template(data).safe_substitute(ctx))
+        out.write(template(data.decode('utf-8')).safe_substitute(ctx))
 
 
 def rewrite_cfgs(toPath, ctx, delim='#'):
