@@ -66,3 +66,23 @@ class TestDownloaderUtils(object):
 #        # disabled by default, as it requires a proxy server w/auth in place
 #        self.run_download(
 #            Downloader({'http_proxy': 'http://dan:dan@localhost:8080/'}))
+
+#    def test_with_proxy_direct(self):
+#        # disabled by default, as it requires a proxy server w/auth in place
+#        self.run_download_direct(
+#            Downloader({'http_proxy': 'http://dan:dan@localhost:8080/'}))
+
+#    def test_with_proxy_curl(self):
+#        # disabled by default, as it requires a proxy server in place
+#        self.run_download(
+#            CurlDownloader({'http_proxy': 'http://localhost:8080/'}))
+
+#    def test_with_proxy_auth_curl(self):
+#        # disabled by default, as it requires a proxy server w/auth in place
+#        self.run_download(
+#            CurlDownloader({'http_proxy': 'http://dan:dan@localhost:8080/'}))
+
+#    def test_with_proxy_direct(self):
+#        # disabled by default, as it requires a proxy server w/auth in place
+#        self.run_download_direct(
+#            CurlDownloader({'http_proxy': 'http://dan:dan@localhost:8080/'}))
