@@ -56,3 +56,13 @@ class TestDownloaderUtils(object):
     def test_download_direct_curl(self):
         data = self.run_download_direct(CurlDownloader({}))
         eq_(1, data.count('PEP 249'))
+
+#    def test_with_proxy(self):
+#        # disabled by default, as it requires a proxy server in place
+#        self.run_download(
+#            Downloader({'http_proxy': 'http://localhost:8080/'}))
+
+#    def test_with_proxy_auth(self):
+#        # disabled by default, as it requires a proxy server w/auth in place
+#        self.run_download(
+#            Downloader({'http_proxy': 'http://dan:dan@localhost:8080/'}))

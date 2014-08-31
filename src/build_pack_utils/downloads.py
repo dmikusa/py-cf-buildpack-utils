@@ -10,6 +10,22 @@ class Downloader(object):
     def __init__(self, config):
         self._ctx = config
         self._log = logging.getLogger('downloads')
+        self._init_proxy()
+
+    def _init_proxy(self):
+        handlers = {}
+        for key in self._ctx.keys():
+            if key.lower().endswith('_proxy'):
+                handlers[key.split('_')[0]] = self._ctx[key]
+        self._log.debug('Loaded proxy handlers [%s]', handlers)
+        openers = []
+        if handlers:
+            openers.append(urllib2.ProxyHandler(handlers))
+            for handler in handlers.values():
+                if '@' in handler:
+                    openers.append(urllib2.ProxyBasicAuthHandler())
+            opener = urllib2.build_opener(*openers)
+            urllib2.install_opener(opener)
 
     def download(self, url, toFile):
         res = urllib2.urlopen(url)
