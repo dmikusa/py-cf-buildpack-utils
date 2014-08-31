@@ -1,4 +1,5 @@
 Pygments==1.6
+dingus==0.3.4
 flake8==2.2.3
 mccabe==0.2.1
 nose==1.3.4
