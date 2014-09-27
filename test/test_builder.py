@@ -24,6 +24,7 @@ from build_pack_utils import Register
 from build_pack_utils import ExtensionRegister
 from build_pack_utils import ModuleInstaller
 from build_pack_utils import SaveBuilder
+from build_pack_utils import Shell
 from build_pack_utils import utils
 
 
@@ -1621,3 +1622,44 @@ class TestSaveBuilder(object):
             eq_(2, len(lines))
             eq_('server: sleep 1\n', lines[0])
             eq_('server: sleep 2\n', lines[1])
+
+
+class TestShell(object):
+    def test_basic_cmds(self):
+        buf = StringIO()
+        sh = Shell(stream=buf)
+        sh.pwd()
+        eq_(os.getcwd(), buf.getvalue().strip())
+        buf.close()
+
+    def test_retains_location(self):
+        buf = StringIO()
+        sh = Shell(stream=buf)
+        sh.pwd()
+        cwd = buf.getvalue().strip()
+        sh.cd('test')
+        buf.truncate(0)
+        sh.pwd()
+        ncwd = buf.getvalue().strip()
+        assert cwd != ncwd
+        eq_(os.path.join(os.getcwd(), 'test'), ncwd)
+
+    def test_retains_environment(self):
+        buf = StringIO()
+        # works if you want to export
+        sh = Shell(stream=buf)
+        sh.export('MYENV=JUNK')
+        sh.env()
+        assert 'MYENV=JUNK' in buf.getvalue()
+        # to just set, use dict notation a[env]
+        sh['SOMEENV'] = 'UNIQUE'
+        eq_('UNIQUE', sh['SOMEENV'])
+        assert 'SOMEENV' in sh
+        del sh['SOMEENV']
+        eq_('', sh['SOMEENV'])
+
+    def test_pipe(self):
+        buf = StringIO()
+        sh = Shell(stream=buf)
+        sh.cat('/dev/urandom', '|', 'head', '-c 10')
+        eq_(10, len(buf.getvalue().strip()))
