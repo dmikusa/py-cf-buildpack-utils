@@ -695,7 +695,7 @@ class TestFileUtil(object):
             fu.where_name_does_not_match('^.*plugins.*$')
             fu.where_name_does_not_match('^.*HASH.*$')
             fu.done()
-            eq_(6, len(os.listdir(tmp)))
+            eq_(7, len(os.listdir(tmp)))
             assert os.path.exists(tmp + '/config.json')
             assert os.path.exists(tmp + '/modules.mods')
             assert os.path.exists(tmp + '/app')

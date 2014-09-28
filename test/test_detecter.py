@@ -41,7 +41,7 @@ class TestBaseFileSearch(object):
         bfs.recursive = True
         bfs._match = self.match_stub
         bfs.search('./test/data')
-        eq_(51, len(self.files))
+        eq_(53, len(self.files))
         assert '.bp-config' in self.files
         assert 'defaults' in self.files
         assert 'HASH' in self.files
@@ -54,7 +54,7 @@ class TestBaseFileSearch(object):
         bfs.recursive = True
         bfs._match = self.match_stub
         bfs.search('./test/data')
-        eq_(51, len(self.files))
+        eq_(53, len(self.files))
         assert './test/data/.bp-config' in self.files
         assert './test/data/defaults' in self.files
         assert './test/data/HASH' in self.files
