@@ -360,6 +360,31 @@ class TestConfigFileEditor(object):
         cfg = utils.ConfigFileEditor('test/data/defaults/php-fpm.conf')
         cfg.update_lines([], '')
 
+    def test_append(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php-fpm.conf')
+        eq_(517, len(cfg._lines))
+        cfg.append_lines(['test=1', 'test=2'])
+        eq_(519, len(cfg._lines))
+
+    def test_append_after_found(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php.ini')
+        eq_(1822, len(cfg._lines))
+        cfg.insert_after(
+            r'^mssql.max_links = -1',
+            ['test=1', 'test=2'])
+        eq_(1824, len(cfg._lines))
+        eq_('mssql.max_links = -1\n', cfg._lines[1590])
+        eq_('test=1\n', cfg._lines[1591])
+        eq_('test=2\n', cfg._lines[1592])
+
+    def test_append_after_not_found(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php.ini')
+        eq_(1822, len(cfg._lines))
+        cfg.insert_after(
+            r'^aldsjfjdfkdjf',
+            ['test=1', 'test=2'])
+        eq_(1822, len(cfg._lines))
+
     def test_save(self):
         try:
             expected = os.path.join(tempfile.gettempdir(), 'php-fpm-new.conf')

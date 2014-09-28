@@ -180,6 +180,20 @@ class ConfigFileEditor(object):
             raise ValueError("must be str or RegexObject")
         self._lines = [regex.sub(repl, line) for line in self._lines]
 
+    def append_lines(self, lines):
+        self._lines.extend(lines)
+
+    def insert_after(self, regex, lines):
+        if hasattr(regex, 'strip'):
+            regex = re.compile(regex)
+        if not hasattr(regex, 'match'):
+            raise ValueError("must be str or RegexObject")
+        for i, line in enumerate(self._lines):
+            if regex.match(line):
+                for j, item in enumerate(["%s\n" % l for l in lines]):
+                    self._lines.insert((i + j + 1), item)
+                break
+
     def save(self, cfgPath):
         with open(cfgPath, 'wt') as cfg:
             cfg.writelines(self._lines)
