@@ -4,7 +4,7 @@ import tempfile
 import json
 from dingus import Dingus
 from nose.tools import eq_
-from nose.tools import with_setup
+from nose.tools import raises
 from build_pack_utils import utils
 
 
@@ -207,7 +207,6 @@ class TestCopytree(object):
     def assert_exists(self, path):
         eq_(True, os.path.exists(os.path.join(self.toDir, path)))
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_copytree_dirs(self):
         fromDir = 'test/data/plugins'
         utils.copytree(fromDir, self.toDir)
@@ -216,7 +215,6 @@ class TestCopytree(object):
         self.assert_exists(os.path.join(self.toDir, 'test2'))
         self.assert_exists(os.path.join(self.toDir, 'test3'))
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_copytree_flat(self):
         fromDir = 'test/data/.bp-config'
         utils.copytree(fromDir, self.toDir)
@@ -326,3 +324,50 @@ class TestFindBpUrl(object):
                 os.path.dirname(self.this_project),
                 'cf-php-build-pack'))
         assert prj_git_url != git_url
+
+
+class TestConfigFileEditor(object):
+    def test_find_lines_matching(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php-fpm.conf')
+        lines = cfg.find_lines_matching(r'^pid =')
+        eq_(1, len(lines))
+        eq_('pid = @{HOME}/php/var/run/php-fpm.pid', lines[0])
+
+    @raises(ValueError)
+    def test_find_lines_matching_bad_expression(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php-fpm.conf')
+        cfg.find_lines_matching([])
+
+    def test_find_lines_matching_multiple(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php.ini')
+        lines = cfg.find_lines_matching(r'^mssql.')
+        eq_(7, len(lines))
+        eq_('mssql.allow_persistent = On', lines[0])
+        eq_('mssql.max_persistent = -1', lines[1])
+        eq_('mssql.max_links = -1', lines[2])
+
+    def test_update_lines(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php.ini')
+        cfg.update_lines(
+            r'^mssql.max_links = -1',
+            'mssql.max_links = 5')
+        lines = cfg.find_lines_matching(r'^mssql.max_links')
+        eq_(1, len(lines))
+        eq_('mssql.max_links = 5', lines[0])
+
+    @raises(ValueError)
+    def test_update_lines_bad_expression(self):
+        cfg = utils.ConfigFileEditor('test/data/defaults/php-fpm.conf')
+        cfg.update_lines([], '')
+
+    def test_save(self):
+        try:
+            expected = os.path.join(tempfile.gettempdir(), 'php-fpm-new.conf')
+            cfg = utils.ConfigFileEditor('test/data/defaults/php-fpm.conf')
+            cfg.save(expected)
+            cfgNew = utils.ConfigFileEditor(expected)
+            for lineA, lineB in zip(cfg._lines, cfgNew._lines):
+                eq_(lineA, lineB)
+        finally:
+            if os.path.exists(expected):
+                os.remove(expected)
