@@ -157,8 +157,9 @@ class TestCloudFoundryInstallerBinaries(object):
                                       '{LOCAL_VERSION}/{LOCAL_PACKAGE}',
                 'LOCAL_PACKAGE_INSTALL_DIR': 'packages/tomcat'
             }))
-        installer._unzipUtil = Dingus('unzip', extract__returns=
-                                      '/tmp/build_dir/packages/tomcat')
+        installer._unzipUtil = Dingus(
+            'unzip',
+            extract__returns='/tmp/build_dir/packages/tomcat')
         installer._hashUtil = Dingus('hash',
                                      calculate_hash__returns='1234WXYZ')
         installer._dcm = Dingus('dcm', get__returns=None)

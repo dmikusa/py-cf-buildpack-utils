@@ -30,7 +30,7 @@ class TestCloudFoundryInstaller(object):
         })
         assert ['.bp'] == os.listdir(self.buildDir)
         # uncomment to enforce cache is cleared every time
-        #assert [] == os.listdir(self.cacheDir)
+        # assert [] == os.listdir(self.cacheDir)
 
     def tearDown(self):
         # delete downloaded and temp files
@@ -40,7 +40,7 @@ class TestCloudFoundryInstaller(object):
         if os.path.exists(snakeFile):
             os.remove(snakeFile)
         # uncomment to force download every time
-        #if os.path.exists(self.cacheDir):
+        # if os.path.exists(self.cacheDir):
         #   shutil.rmtree(self.cacheDir)
         # Restore old stdout && args
         sys.argv = self.old_sys_argv
