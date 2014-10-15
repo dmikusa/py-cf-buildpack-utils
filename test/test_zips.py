@@ -11,6 +11,8 @@ class TestUnzipUtil(object):
 
     HASH_FILE = './test/data/HASH'
     HASH_FILE_ZIP = './test/data/HASH.zip'
+    HASH_FILE_WAR = './test/data/HASH.war'
+    HASH_FILE_JAR = './test/data/HASH.jar'
     HASH_FILE_STRIP_ZIP = './test/data/HASH-STRIP.zip'
     HASH_FILE_BZ2 = './test/data/HASH.bz2'
     HASH_FILE_GZ = './test/data/HASH.gz'
@@ -122,3 +124,7 @@ class TestUnzipUtil(object):
             uzUtil._pick_based_on_file_extension(self.HASH_FILE_TARGZ)
         assert uzUtil._tar_bunzip2 == \
             uzUtil._pick_based_on_file_extension(self.HASH_FILE_TARBZ2)
+        assert uzUtil._unzip == \
+            uzUtil._pick_based_on_file_extension(self.HASH_FILE_WAR)
+        assert uzUtil._unzip == \
+            uzUtil._pick_based_on_file_extension(self.HASH_FILE_JAR)
