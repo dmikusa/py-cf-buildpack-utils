@@ -802,10 +802,13 @@ class BuildPackManager(object):
         self._bp._branch = branch
         return self
 
+    def using_stream(self, stream):
+        self._bp._stream = stream
+
     def done(self):
         if self._bp:
             self._bp._clone()
-            print self._bp._compile()
+            self._bp._compile()
         return self._builder
 
 

@@ -616,7 +616,7 @@ class TestFileUtil(object):
             fu.under('./test/data')
             fu.into(tmp)
             fu.done()
-            eq_(21, len(os.listdir(tmp)))
+            eq_(23, len(os.listdir(tmp)))
             assert os.path.exists(tmp + '/HASH')
             assert os.path.isfile(tmp + '/HASH')
             assert os.path.exists(tmp + '/.bp-config')
@@ -630,13 +630,13 @@ class TestFileUtil(object):
         tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
         try:
             shutil.copytree('./test/data', tmp1)
-            eq_(21, len(os.listdir(tmp1)))
+            eq_(23, len(os.listdir(tmp1)))
             fu = FileUtil(self.builder, move=True)
             fu.under(tmp1)
             fu.into(tmp2)
             fu.done()
             eq_(0, len(os.listdir(tmp1)))
-            eq_(21, len(os.listdir(tmp2)))
+            eq_(23, len(os.listdir(tmp2)))
             assert os.path.exists(tmp2 + '/HASH')
             assert os.path.isfile(tmp2 + '/HASH')
             assert os.path.exists(tmp2 + '/.bp-config')
@@ -711,7 +711,7 @@ class TestFileUtil(object):
         tmp2 = os.path.join(tempfile.gettempdir(), 'test_done_works_2')
         try:
             shutil.copytree('./test/data', tmp1)
-            eq_(21, len(os.listdir(tmp1)))
+            eq_(23, len(os.listdir(tmp1)))
             fu = FileUtil(self.builder, move=True)
             fu.under(tmp1)
             fu.into(tmp2)
@@ -721,7 +721,7 @@ class TestFileUtil(object):
             fu.where_name_is('options.json')
             fu.done()
             # Confirm these files were skipped
-            eq_(18, len(os.listdir(tmp1)))
+            eq_(20, len(os.listdir(tmp1)))
             assert os.path.exists(tmp1 + '/HASH.gz')
             assert os.path.exists(tmp1 + '/app')
             assert os.path.exists(tmp1 + '/.bp-config/junk.xml')
@@ -1312,16 +1312,14 @@ class TestBuildPackManager(object):
         em.from_buildpack(
             'https://github.com/dmikusa-pivotal/cf-test-buildpack')
         em.using_branch(None)
-        old_sysout = sys.stdout
-        new_sysout = StringIO()
+        buf = StringIO()
+        em.using_stream(buf)
         try:
-            sys.stdout = new_sysout
             em.done()
         finally:
-            sys.stdout = old_sysout
             if os.path.exists(em._bp.bp_dir):
                 shutil.rmtree(em._bp.bp_dir)
-        output = new_sysout.getvalue()
+        output = buf.getvalue()
         eq_(True, output.find('Listing Environment:') > -1)
         eq_(True, output.find('CPU Info') > -1)
 

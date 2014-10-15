@@ -5,7 +5,6 @@ import tempfile
 import shutil
 import cStringIO
 from nose.tools import eq_
-from nose.tools import with_setup
 from build_pack_utils import runner
 
 
@@ -25,7 +24,8 @@ class TestRunner(object):
         }
         os.chdir(self._cwd)
         shutil.copytree(TEST_APP, self.ctx['BUILD_DIR'])
-        self.bp = runner.BuildPack(self.ctx, TEST_BP)
+        self.buf = cStringIO.StringIO()
+        self.bp = runner.BuildPack(self.ctx, TEST_BP, stream=self.buf)
 
     def tearDown(self):
         if os.path.exists(self.root):
@@ -33,7 +33,6 @@ class TestRunner(object):
         if os.path.exists(self.bp.bp_dir):
             shutil.rmtree(self.bp.bp_dir)
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_clone(self):
         self.bp._clone()
         eq_(True, os.path.exists(self.bp.bp_dir))
@@ -45,13 +44,11 @@ class TestRunner(object):
         eq_(True, os.path.exists(os.path.join(self.bp.bp_dir,
                                               'bin', 'detect')))
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_detect(self):
         self.bp._clone()
         res = self.bp._detect()
         eq_('CACHETEST', res)
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_detect_fail(self):
         self.bp._clone()
         os.remove(os.path.join(self.ctx['BUILD_DIR'], 'cache-test.txt'))
@@ -62,22 +59,20 @@ class TestRunner(object):
             eq_(155, str(e).find('returned non-zero exit status 1'))
             eq_('no\n', e.output)
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_compile(self):
         self.bp._clone()
-        output = self.bp._compile()
-        eq_(True, output.startswith('Running cache test...'))
+        self.bp._compile()
+        output = self.buf.getvalue()
+        eq_(True, output.find('Running cache test...') >= 0)
         eq_(True, output.find('Listing Environment:') >= 0)
         eq_(True, output.find('CPU Info') >= 0)
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_release(self):
         self.bp._clone()
         output = self.bp._release()
         eq_(True, output.startswith('---'))
         eq_(True, output.find('web: ./start.sh') >= 0)
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_run(self):
         self.bp.run()
 
