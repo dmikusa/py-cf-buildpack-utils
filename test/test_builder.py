@@ -1032,7 +1032,7 @@ class TestStartScriptBuilder(object):
 
     def test_fancy_1(self):
         ssb = (StartScriptBuilder(self.builder)
-                   .environment_variable()
+                   .environment_variable()  # noqa
                        .export()
                        .name('TEST')
                        .value('1234')
@@ -1175,7 +1175,7 @@ class TestScriptCommandBuilder(object):
 
     def test_done_fancy(self):
         res = (ScriptCommandBuilder(self.builder, self.ssb)
-                   .run('ps')
+                   .run('ps')  # noqa
                    .with_argument('aux')
                    .pipe()
                        .run('grep')
@@ -1579,7 +1579,7 @@ class TestSaveBuilder(object):
         with open(envFile, 'rt') as f:
             lines = f.readlines()
             eq_(1, len(lines))
-            eq_('TEST_ENV=1234\n', lines[0])
+            eq_('export TEST_ENV=1234\n', lines[0])
 
     def test_runtime_environment_with_dups(self):
         sb = SaveBuilder(self.builder)
@@ -1590,7 +1590,7 @@ class TestSaveBuilder(object):
         with open(envFile, 'rt') as f:
             lines = f.readlines()
             eq_(1, len(lines))
-            eq_('TEST_ENV=1234:4321\n', lines[0])
+            eq_('export TEST_ENV=1234:4321\n', lines[0])
 
     def test_runtime_environment_with_dups_list(self):
         self.ctx['EXTENSIONS'] = [
@@ -1605,8 +1605,8 @@ class TestSaveBuilder(object):
         with open(envFile, 'rt') as f:
             lines = f.readlines()
             eq_(1, len(lines))
-            eq_('TEST_ENV=%s\n' % os.pathsep.join(['1234', '4321',
-                                                   '9876', '0123-']),
+            eq_('export TEST_ENV=%s\n' % os.pathsep.join(['1234', '4321',
+                                                          '9876', '0123-']),
                 lines[0])
 
     def test_process_list(self):
