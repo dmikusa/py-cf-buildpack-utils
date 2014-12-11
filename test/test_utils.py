@@ -396,3 +396,30 @@ class TestConfigFileEditor(object):
         finally:
             if os.path.exists(expected):
                 os.remove(expected)
+
+
+class TestUnique(object):
+    def test_no_change(self):
+        x = [6, 5, 7, 8, 9, 3, 2, 1]
+        y = utils.unique(x)
+        assert len(x) == len(y)
+        assert [a == b for a, b in zip(x, y)]
+
+    def test_all_dups(self):
+        x = [1, 1, 1, 1, 1, 1, 1]
+        y = utils.unique(x)
+        assert len(y) == 1
+        assert y[0] == 1
+
+    def test_order_is_the_same(self):
+        x = [6, 5, 7, 6, 8, 9, 2, 2, 7, 5, 1, 9, 1, 6, 7, 0]
+        y = utils.unique(x)
+        assert len(y) == 8
+        assert y[0] == 6
+        assert y[1] == 5
+        assert y[2] == 7
+        assert y[3] == 8
+        assert y[4] == 9
+        assert y[5] == 2
+        assert y[6] == 1
+        assert y[7] == 0
