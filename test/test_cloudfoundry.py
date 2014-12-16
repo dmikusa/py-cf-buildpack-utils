@@ -79,6 +79,11 @@ class TestCloudFoundryUtil(object):
         cfg = cf.load_json_config_file('does/not/exists.json')
         assert cfg == {}
 
+    def test_load_json_config_file_invalid_json(self):
+        cf = CloudFoundryUtil()
+        cfg = cf.load_json_config_file('./test/data/env.txt')
+        assert cfg == {}
+
 
 class CustomDownloader(Downloader):
     pass
