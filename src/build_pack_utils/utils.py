@@ -211,10 +211,6 @@ def unique(seq):
 #   https://bitbucket.org/pypy/pypy/src/9d88b4875d6e/lib-python/2.7/shutil.py
 # Modifying this so that it doesn't care about an initial directory existing
 
-# This is copytree from PyPy 2.7 source code.
-#   https://bitbucket.org/pypy/pypy/src/9d88b4875d6e/lib-python/2.7/shutil.py
-# Modifying this so that it doesn't care about an initial directory existing
-
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -233,6 +229,7 @@ def unique(seq):
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 
 def copytree(src, dst, symlinks=False, ignore=None):
     """Recursively copy a directory tree using copy2().
