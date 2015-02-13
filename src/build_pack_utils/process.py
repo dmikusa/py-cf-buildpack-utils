@@ -216,7 +216,7 @@ class Printer(object):
 
         for arg in args:
             lines = arg.split('\n')
-            lines = [self._prefix() + l if l else l for l in lines]
+            lines = [self._prefix() + l.encode('utf-8') if l else l for l in lines]
             new_args.append('\n'.join(lines))
 
         self.output.write(*new_args, **kwargs)
