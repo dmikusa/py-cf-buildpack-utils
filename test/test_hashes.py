@@ -64,15 +64,15 @@ class TestHashUtils(object):
 
     def test_hash_util_empty_algorithms(self):
         hsh = HashUtil({'CACHE_HASH_ALGORITHM': ''})
-        self.hash_file_bad_algorithm(hsh, '', 'unsupported hash type')
+        self.hash_file_bad_algorithm(hsh, '', 'unsupported hash type ')
 
     def test_hash_util_bad_algorithm(self):
         hsh = HashUtil({'CACHE_HASH_ALGORITHM': '???'})
-        self.hash_file_bad_algorithm(hsh, '???', 'unsupported hash type')
+        self.hash_file_bad_algorithm(hsh, '???', 'unsupported hash type ???')
 
     def test_hash_util_missing_algorithm(self):
         hsh = HashUtil({'CACHE_HASH_ALGORITHM': '2'})
-        self.hash_file_bad_algorithm(hsh, '2', 'unsupported hash type')
+        self.hash_file_bad_algorithm(hsh, '2', 'unsupported hash type 2')
 
     # Test External SHA
     def test_sha_hash_util_sha1(self):
