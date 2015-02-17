@@ -24,9 +24,10 @@ class CloudFoundryUtil(object):
     @staticmethod
     def initialize():
         # set stdout as non-buffered
-        fl = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
-        fl |= os.O_DSYNC
-        fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL)
+        if hasattr(sys.stdout, 'fileno'):
+            fl = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
+            fl |= os.O_DSYNC
+            fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL)
         ctx = utils.FormattedDict()
         # Add environment variables
         for key, val in os.environ.iteritems():
