@@ -294,6 +294,19 @@ class TestFormattedDict(object):
         })
         eq_('{"x": 1}', x['DATA'])
 
+    def test_place_holder_wrapped(self):
+        x = utils.FormattedDict({
+            'DATA': utils.wrap('{some_key}')
+        })
+        eq_('{some_key}', x['DATA'])
+
+    @raises(KeyError)
+    def test_place_holder(self):
+        x = utils.FormattedDict({
+            'DATA': '{some_key}'
+        })
+        assert '{some_key}' != x['DATA']
+
 
 class TestFindBpUrl(object):
     def setUp(self):
