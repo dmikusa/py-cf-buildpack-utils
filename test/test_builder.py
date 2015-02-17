@@ -1574,7 +1574,8 @@ class TestSaveBuilder(object):
         sb = SaveBuilder(self.builder)
         res = sb.runtime_environment()
         eq_(sb, res)
-        envFile = os.path.join(self.ctx['BUILD_DIR'], '.env')
+        envFile = os.path.join(self.ctx['BUILD_DIR'], '.profile.d',
+                               'bp_env_vars.sh')
         eq_(True, os.path.exists(envFile))
         with open(envFile, 'rt') as f:
             lines = f.readlines()
@@ -1585,7 +1586,8 @@ class TestSaveBuilder(object):
         sb = SaveBuilder(self.builder)
         res = sb.runtime_environment()
         eq_(sb, res)
-        envFile = os.path.join(self.ctx['BUILD_DIR'], '.env')
+        envFile = os.path.join(self.ctx['BUILD_DIR'], '.profile.d',
+                               'bp_env_vars.sh')
         eq_(True, os.path.exists(envFile))
         with open(envFile, 'rt') as f:
             lines = f.readlines()
@@ -1600,7 +1602,8 @@ class TestSaveBuilder(object):
         sb = SaveBuilder(self.builder)
         res = sb.runtime_environment()
         eq_(sb, res)
-        envFile = os.path.join(self.ctx['BUILD_DIR'], '.env')
+        envFile = os.path.join(self.ctx['BUILD_DIR'], '.profile.d',
+                               'bp_env_vars.sh')
         eq_(True, os.path.exists(envFile))
         with open(envFile, 'rt') as f:
             lines = f.readlines()
