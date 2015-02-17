@@ -32,8 +32,9 @@ class CloudFoundryUtil(object):
         for key, val in os.environ.iteritems():
             ctx[key] = wrap(val)
         # Convert JSON env variables
-        ctx['VCAP_APPLICATION'] = json.loads(ctx.get('VCAP_APPLICATION', '{}'))
-        ctx['VCAP_SERVICES'] = json.loads(ctx.get('VCAP_SERVICES', '{}'))
+        ctx['VCAP_APPLICATION'] = json.loads(ctx.get('VCAP_APPLICATION',
+                                             wrap('{}')))
+        ctx['VCAP_SERVICES'] = json.loads(ctx.get('VCAP_SERVICES', wrap('{}')))
         # Build Pack Location
         ctx['BP_DIR'] = os.path.dirname(os.path.dirname(sys.argv[0]))
         # User's Application Files, build droplet here

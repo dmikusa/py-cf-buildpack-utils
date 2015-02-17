@@ -16,6 +16,8 @@ from build_pack_utils import utils
 class TestCloudFoundryUtil(object):
 
     def setUp(self):
+        self._environ = os.environ
+        os.environ = {}
         self.old_sys_argv = sys.argv
         sys.argv = [
             '/tmp/buildpacks/my-buildpack/bin/compile',
@@ -32,6 +34,7 @@ class TestCloudFoundryUtil(object):
         if os.path.exists(path):
             shutil.rmtree(path)
         sys.argv = self.old_sys_argv
+        os.environ = self._environ
 
     def test_load_env(self):
         os.environ['VCAP_APPLICATION'] = json.dumps({'name': 'test'})
@@ -48,6 +51,11 @@ class TestCloudFoundryUtil(object):
         assert ctx['VCAP_APPLICATION']['name'] == 'test'
         assert ctx['VCAP_SERVICES']['service'] == 'junk'
         assert '{some_val}' == ctx['SOME_KEY']
+
+    def test_load_env_empty_vcap_envs(self):
+        ctx = CloudFoundryUtil.initialize()
+        assert ctx['VCAP_APPLICATION'] == {}
+        assert ctx['VCAP_SERVICES'] == {}
 
     def test_load_json_config_file(self):
         cf = CloudFoundryUtil()
