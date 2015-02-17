@@ -6,7 +6,6 @@ import json
 from dingus import Dingus
 from dingus import patch
 from nose.tools import eq_
-from nose.tools import with_setup
 from build_pack_utils import CloudFoundryUtil
 from build_pack_utils import CloudFoundryInstaller
 from build_pack_utils import Downloader
@@ -17,7 +16,6 @@ from build_pack_utils import utils
 class TestCloudFoundryUtil(object):
 
     def setUp(self):
-        self.old_stdout = sys.stdout
         self.old_sys_argv = sys.argv
         sys.argv = [
             '/tmp/buildpacks/my-buildpack/bin/compile',
@@ -34,12 +32,11 @@ class TestCloudFoundryUtil(object):
         if os.path.exists(path):
             shutil.rmtree(path)
         sys.argv = self.old_sys_argv
-        sys.stdout = self.old_stdout
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_load_env(self):
         os.environ['VCAP_APPLICATION'] = json.dumps({'name': 'test'})
         os.environ['VCAP_SERVICES'] = json.dumps({'service': 'junk'})
+        os.environ['SOME_KEY'] = '{some_val}'
         ctx = CloudFoundryUtil.initialize()
         assert '/tmp/staged/app' == ctx['BUILD_DIR']
         assert '/tmp/cache' == ctx['CACHE_DIR']
@@ -50,8 +47,8 @@ class TestCloudFoundryUtil(object):
         assert os.path.exists(ctx['CACHE_DIR'])
         assert ctx['VCAP_APPLICATION']['name'] == 'test'
         assert ctx['VCAP_SERVICES']['service'] == 'junk'
+        assert '{some_val}' == ctx['SOME_KEY']
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_load_json_config_file(self):
         cf = CloudFoundryUtil()
         cfg = cf.load_json_config_file('./test/data/config.json')
@@ -62,7 +59,6 @@ class TestCloudFoundryUtil(object):
         assert 'y' in cfg['map'].keys()
         assert cfg['map']['z'] == 3
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_load_json_config_file_from(self):
         cf = CloudFoundryUtil()
         cfg = cf.load_json_config_file_from('./test/data/', 'config.json')
@@ -73,7 +69,6 @@ class TestCloudFoundryUtil(object):
         assert 'y' in cfg['map'].keys()
         assert cfg['map']['z'] == 3
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_load_json_config_file_does_not_exist(self):
         cf = CloudFoundryUtil()
         cfg = cf.load_json_config_file('does/not/exists.json')
@@ -396,7 +391,6 @@ class TestCloudFoundryInstallerConfig(object):
         os.remove(filePath)
         assert not os.path.exists(filePath)
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_install_from_build_pack(self):
         # Setup mocks
         installer = CloudFoundryInstaller({
@@ -422,7 +416,6 @@ class TestCloudFoundryInstallerConfig(object):
         self.assertFileExistsAndDelete(
             os.path.join(self._tmpDir, 'in/a/path/renamed.json'))
 
-    @with_setup(setup=setUp, teardown=tearDown)
     def test_install_from_app(self):
         # Setup mocks
         installer = CloudFoundryInstaller({

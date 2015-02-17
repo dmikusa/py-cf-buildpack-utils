@@ -13,6 +13,7 @@ from downloads import Downloader
 from downloads import CurlDownloader
 from utils import safe_makedirs
 from utils import find_git_url
+from utils import wrap
 
 
 _log = logging.getLogger('cloudfoundry')
@@ -26,14 +27,11 @@ class CloudFoundryUtil(object):
             sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
         ctx = utils.FormattedDict()
         # Add environment variables
-        ctx.update(os.environ)
+        for key, val in os.environ.iteritems():
+            ctx[key] = wrap(val)
         # Convert JSON env variables
-        ctx['VCAP_APPLICATION'] = json.loads(ctx.get('VCAP_APPLICATION',
-                                                     '{}',
-                                                     format=False))
-        ctx['VCAP_SERVICES'] = json.loads(ctx.get('VCAP_SERVICES',
-                                                  '{}',
-                                                  format=False))
+        ctx['VCAP_APPLICATION'] = json.loads(ctx.get('VCAP_APPLICATION', '{}'))
+        ctx['VCAP_SERVICES'] = json.loads(ctx.get('VCAP_SERVICES', '{}'))
         # Build Pack Location
         ctx['BP_DIR'] = os.path.dirname(os.path.dirname(sys.argv[0]))
         # User's Application Files, build droplet here
