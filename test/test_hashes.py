@@ -20,7 +20,8 @@ class TestHashUtils(object):
             hsh.calculate_hash(self.HASH_FILE)
             assert False  # Should not happen
         except ValueError, ex:
-            eq_(msg, ex.args[0])
+            assert msg.startswith(ex.args[0]), \
+                "does not start with [%s]" % ex.args[0]
 
     # Test hashlib
     def test_hash_util_sha1(self):
