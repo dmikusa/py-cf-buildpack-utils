@@ -5,6 +5,7 @@ import tempfile
 import shutil
 import utils
 import logging
+import fcntl
 from urlparse import urlparse
 from zips import UnzipUtil
 from hashes import HashUtil
@@ -22,9 +23,10 @@ _log = logging.getLogger('cloudfoundry')
 class CloudFoundryUtil(object):
     @staticmethod
     def initialize():
-        # Open stdout unbuffered
-        if hasattr(sys.stdout, 'fileno'):
-            sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+        # set stdout as non-buffered
+        fl = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
+        fl |= os.O_DSYNC
+        fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL)
         ctx = utils.FormattedDict()
         # Add environment variables
         for key, val in os.environ.iteritems():
