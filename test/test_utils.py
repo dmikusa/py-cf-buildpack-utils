@@ -307,6 +307,15 @@ class TestFormattedDict(object):
         })
         assert '{some_key}' != x['DATA']
 
+    def test_get_with_format_false(self):
+        x = utils.FormattedDict({
+            'DATA': utils.wrap('{some_key}')
+        })
+        data = x.get('DATA', format=False)
+        assert not hasattr(data, 'unwrap'), \
+            "should not be a wrapper object"
+        assert "{some_key}" == data, "data should match"
+
 
 class TestFindBpUrl(object):
     def setUp(self):
