@@ -316,6 +316,10 @@ class TestFormattedDict(object):
             "should not be a wrapper object"
         assert "{some_key}" == data, "data should match"
 
+    def test_wrapped_object_to_string(self):
+        x = utils.wrap('asdf')
+        assert "asdf" == str(x), "wrong, got [%s]" % str(x)
+
 
 class TestFindBpUrl(object):
     def setUp(self):
