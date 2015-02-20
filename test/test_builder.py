@@ -648,6 +648,28 @@ class TestFileUtil(object):
             if os.path.exists(tmp2):
                 shutil.rmtree(tmp2)
 
+    def test_done_works_with_unicode_paths(self):
+        tmp = os.path.join(tempfile.gettempdir(),
+                           'test_done_works_with_unicode_paths')
+        # if build dir is a str and webdir is unicode,
+        #  FileUtil will call str.replace(str, unicode) which results
+        #  in forcing the decoding of str.  If that str contains a
+        #  non-ascii character it'll bomb out with a UnicodeDecodeError
+        ctx = utils.FormattedDict({
+            'BUILD_DIR': os.path.join(os.getcwd(), 'test/data'),
+            'WEBDIR': tmp.decode('utf-8')
+        })
+        try:
+            fu = FileUtil(Dingus(_ctx=ctx))
+            fu.under('BUILD_DIR')
+            fu.into('WEBDIR')
+            fu.where_name_matches('.*\.junk')
+            fu.done()
+            eq_(1, len(os.listdir(tmp)))
+        finally:
+            if os.path.exists(tmp):
+                shutil.rmtree(tmp)
+
     def test_done_with_filters(self):
         tmp = os.path.join(tempfile.gettempdir(), 'test_done_works')
         try:
