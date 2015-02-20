@@ -319,6 +319,8 @@ class TestFormattedDict(object):
     def test_wrapped_object_to_string(self):
         x = utils.wrap('asdf')
         assert "asdf" == str(x), "wrong, got [%s]" % str(x)
+        x = utils.wrap(utils.FormattedDict({}))
+        assert "{}" == str(x), "wrong, got [%s]" % str(x)
 
 
 class TestFindBpUrl(object):
