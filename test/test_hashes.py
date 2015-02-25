@@ -1,4 +1,3 @@
-from nose.tools import eq_
 from build_pack_utils import HashUtil
 from build_pack_utils import ShaHashUtil
 

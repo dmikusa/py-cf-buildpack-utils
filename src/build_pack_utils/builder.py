@@ -833,7 +833,8 @@ class SaveBuilder(object):
         # Write pool of environment items to disk, a single item is
         #  written in 'key=val' format, while lists are written as
         #  'key=val:val:val' where ':' is os.pathsep.
-        profile_d_directory = os.path.join(self._builder._ctx['BUILD_DIR'], '.profile.d')
+        profile_d_directory = os.path.join(self._builder._ctx['BUILD_DIR'],
+                                           '.profile.d')
         if not os.path.exists(profile_d_directory):
             os.makedirs(profile_d_directory)
         envPath = os.path.join(profile_d_directory, 'bp_env_vars.sh')
