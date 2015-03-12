@@ -1308,7 +1308,7 @@ class TestBuilder(object):
             sys.stdout = new_sysout
             b = Builder()
             b.configure()
-            b._ctx['START_SCRIPT_NAME'] = '$HOME/my-start-script.sh'
+            b._ctx['START_SCRIPT_NAME'] = 'my-start-script.sh'
             b.release()
         finally:
             sys.argv = old_sysargv
