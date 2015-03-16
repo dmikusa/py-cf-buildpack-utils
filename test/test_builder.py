@@ -717,7 +717,7 @@ class TestFileUtil(object):
             assert os.path.isdir(tmp + '/defaults')
             assert os.path.exists(tmp + '/defaults/options.json')
             assert os.path.isfile(tmp + '/defaults/options.json')
-            eq_(1, len(os.listdir(tmp + '/defaults')))
+            eq_(2, len(os.listdir(tmp + '/defaults')))
         finally:
             if os.path.exists(tmp):
                 shutil.rmtree(tmp)
@@ -785,7 +785,7 @@ class TestFileUtil(object):
             assert os.path.isdir(tmp2 + '/defaults')
             assert os.path.exists(tmp2 + '/defaults/options.json')
             assert os.path.isfile(tmp2 + '/defaults/options.json')
-            eq_(1, len(os.listdir(tmp2 + '/defaults')))
+            eq_(2, len(os.listdir(tmp2 + '/defaults')))
         finally:
             if os.path.exists(tmp1):
                 shutil.rmtree(tmp1)

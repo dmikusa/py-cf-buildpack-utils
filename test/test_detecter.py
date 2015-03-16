@@ -41,12 +41,12 @@ class TestBaseFileSearch(object):
         bfs.recursive = True
         bfs._match = self.match_stub
         bfs.search('./test/data')
-        eq_(56, len(self.files))
+        eq_(58, len(self.files))
         assert '.bp-config' in self.files
         assert 'defaults' in self.files
         assert 'HASH' in self.files
         assert 'HASH.zip' in self.files
-        eq_(3, len([f for f in self.files if f == 'options.json']))
+        eq_(4, len([f for f in self.files if f == 'options.json']))
 
     def test_search_recursive_with_full_path(self):
         bfs = BaseFileSearch()
@@ -54,7 +54,7 @@ class TestBaseFileSearch(object):
         bfs.recursive = True
         bfs._match = self.match_stub
         bfs.search('./test/data')
-        eq_(56, len(self.files))
+        eq_(58, len(self.files))
         assert './test/data/.bp-config' in self.files
         assert './test/data/defaults' in self.files
         assert './test/data/HASH' in self.files
