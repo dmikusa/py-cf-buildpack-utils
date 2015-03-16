@@ -7,6 +7,7 @@ from StringIO import StringIO
 from nose.tools import eq_
 from nose.tools import raises
 from dingus import Dingus
+from dingus import patch
 from urllib2 import HTTPError
 from build_pack_utils import Runner
 from build_pack_utils import Configurer
@@ -48,6 +49,25 @@ class TestConfigurer(object):
         assert 'int' in self.ctx.keys()
         assert 'map' in self.ctx.keys()
         assert res is self.cfgur
+
+    def test_stack_config(self):
+        assert 2 == len(self.ctx.keys())
+        env = {'CF_STACK': 'stack'}
+        with patch('os.environ', env):
+            res = self.cfgur.stack_config()
+        assert 6 == len(self.ctx.keys())
+        assert 'BUILD_DIR' in self.ctx.keys()
+        assert 'BP_DIR' in self.ctx.keys()
+        assert 'list' in self.ctx.keys()
+        assert 'string' in self.ctx.keys()
+        assert 'int' in self.ctx.keys()
+        assert 'map' in self.ctx.keys()
+        assert res is self.cfgur
+
+    def test_stack_config(self):
+        assert 2 == len(self.ctx.keys())
+        res = self.cfgur.stack_config()
+        assert 2 == len(self.ctx.keys())
 
     def test_user_config(self):
         res = self.cfgur.user_config()

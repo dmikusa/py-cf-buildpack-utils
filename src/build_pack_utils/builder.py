@@ -44,6 +44,15 @@ class Configurer(object):
                 'defaults/options.json'))
         return self
 
+    def stack_config(self):
+        stack = os.environ.get('CF_STACK', None)
+        if stack:
+            self._merge(
+                CloudFoundryUtil.load_json_config_file_from(
+                    self.builder._ctx['BP_DIR'],
+                    'defaults/%s/options.json' % stack))
+        return self
+
     def user_config(self, path=None):
         if path is None:
             path = os.path.join('.bp-config', 'options.json')
